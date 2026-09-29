@@ -1,12 +1,14 @@
 from dotenv import load_dotenv
 import os
+import json
+import time
 from google import genai
 
 load_dotenv()
 
 
 MODEL_NAME = "gemini-3.8-flash"
-MODELS = [
+MODELS = [ #This is a list of models that will be tried in order until one returns a valid response.
     "gemini-3.8-flash",
     "gemini-3.5-flash",
     "gemini-3.1-flash-lite"
@@ -16,7 +18,7 @@ client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
 
-def test_ai_connection() -> str:
+def test_ai_connection() -> str: #This function will try to connect to the API and return a test response to ensure the connection is working.
     """Test that the Gemini API connection works."""
     client = genai.Client()
 
@@ -27,8 +29,7 @@ def test_ai_connection() -> str:
 
     return response.text
 
-def build_prompt(record):
-    """"This is the prompt that will be sent to AI"""
+def build_prompt(record): #This function will build the prompt that will be sent to the AI model.
     return f"""
 You are to analyse one supermarket product for expiry and waste risk.
 
@@ -53,10 +54,10 @@ RULES:
 """.strip()
  
 
-def validate_response(response, quantity):
+def validate_response(response, quantity): #This function ensures response is valid JSON and contains the expected fields and values.
     """Validate the response from the AI model."""
     try:
-        data=json.loads(response.text)
+        data=json.loads(response)
 
     except json.JSONDecodeError:
         print("[ERROR] AI model returned invalid JSON.")
@@ -81,18 +82,68 @@ def validate_response(response, quantity):
         return None
     return data
 
-    
+def analyse_product(record): #This function will try each model in the MODELS list until it gets a valid response or all models fail
+
+    prompt = build_prompt(record)
+
+    for model in MODELS: 
+
+        print(f"[INFO] Trying {model}...")
+
+        try:
+            response = client.models.generate_content(
+                model=model,
+                contents=prompt
+            )
+
+            print(f"[OK] Response received from {model}")
+
+            return response.text
+
+        except Exception as error:
+
+            print(f"[ERROR] {model} failed:")
+            print(error)
+
+            print("[INFO] Trying next model...")
+
+    raise Exception("All models failed.")   
 
 
     
-def main() -> None:
-    """Run a simple Gemini API connection test."""
-    try:
-        result = test_ai_connection() 
-        print("[OK] AI connection successful.")
-        print(result)
+def main() -> None: #This is the test function that will be run when the script is executed. It will test the AI connection and then analyse a hardcoded product record.
+    product = { #This is hardcoded example of a product record. When part is finished, this will come from user input.
+        "product_name": "Fresh Milk 1L",
+        "category": "Dairy",
+        "quantity": 20,
+        "selling_price": 3.50
+    }
+
+    try: #This will test the AI connection and then analyse the product record.
+
+        raw_response = analyse_product(product)
+
+        print("\n[AI RESPONSE]")
+        print(raw_response)
+
+        result = validate_response(
+            raw_response,
+            product["quantity"]
+        )
+
+        if result is None:
+            print("\n[ERROR] AI response validation failed.")
+            return
+
+        print("\n[OK] AI response is valid!")
+
+        print("\n[FINAL RESULT]")
+        print(json.dumps(result, indent=4))
+
     except Exception as error:
-        print("[ERROR] AI connection failed.")
+
+        print("\n[FAILED]")
+        print("Could not get a response from AI.")
         print(error)
 
 
