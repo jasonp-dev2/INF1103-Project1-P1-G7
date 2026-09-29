@@ -1,9 +1,15 @@
-
-
+from dotenv import load_dotenv
+import os
 from google import genai
+
+load_dotenv()
 
 
 MODEL_NAME = "gemini-3.8-flash"
+
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+
+
 
 
 def test_ai_connection() -> str:
