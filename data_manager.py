@@ -14,3 +14,15 @@ def get_data_file() -> Path:
     #DATA_FILE is used for testing purposes, avoiding overwrite of data file
     file_path_string = os.environ.get("DATA_FILE", DEFAULT_DATA_FILE)
     return Path(file_path_string)
+
+
+"""Load all saved records from file as list, return [] if file is missing."""
+def load_records() -> list:
+    path = get_data_file()
+    
+    try:
+        # Path objects can be passed directly into the open() function
+        with path.open("r") as file:
+            return json.load(file)
+    except FileNotFoundError:
+        return []
