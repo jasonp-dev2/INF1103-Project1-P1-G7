@@ -6,7 +6,11 @@ load_dotenv()
 
 
 MODEL_NAME = "gemini-3.8-flash"
-
+MODELS = [
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+    "gemini-3.1-flash-lite"
+]
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
@@ -49,10 +53,38 @@ RULES:
 """.strip()
  
 
-def validate_response():
+def validate_response(response, quantity):
+    """Validate the response from the AI model."""
+    try:
+        data=json.loads(response.text)
 
-    """This will check if the AI response is correct and reject invalid data"""
+    except json.JSONDecodeError:
+        print("[ERROR] AI model returned invalid JSON.")
+        print(response.text)
+        return None
+    expected_fields = {"risk_level", "predicted_units_unsold", "recommended_discount", "waste_cost_if_unsold"}
 
+    if set(data.keys()) != expected_fields:
+        print("[ERROR] Incorrect fields in AI model response.")
+        return None
+    if data["risk_level"] not in {"LOW", "MEDIUM", "HIGH"}:
+        print("[ERROR] Invalid risk_level value.")
+        return None
+    if not isinstance(data["predicted_units_unsold"], int) or not (0 <= data["predicted_units_unsold"] <= quantity):
+        print("[ERROR] Invalid predicted_units_unsold value.")
+        return None
+    if not isinstance(data["recommended_discount"], (int, float)) or not (0 <= data["recommended_discount"] <= 100):
+        print("[ERROR] Invalid recommended_discount value.")
+        return None
+    if not isinstance(data["waste_cost_if_unsold"], (int, float)) or data["waste_cost_if_unsold"] < 0:
+        print("[ERROR] Invalid waste_cost_if_unsold value.")
+        return None
+    return data
+
+    
+
+
+    
 def main() -> None:
     """Run a simple Gemini API connection test."""
     try:
