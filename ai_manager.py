@@ -1,31 +1,34 @@
-import asyncio
-import os
-
-from copilot import CopilotClient
-
-DEFAULT_MODEL = "gpt-5.4"
-
-def get_model_name() -> str:
-    return os.environ.get("AI_MODEL", DEFAULT_MODEL)
 
 
-async def test_ai_connection() -> str:
-    async with CopilotClient() as client:
-        async with await client.create_session(
-            model=get_model_name()
-        ) as session:
-            response = await session.send_and_wait(
-                "Reply with exactly: AI connection successful"
-            )
+from google import genai
 
-            if response is None:
-                return ""
 
-            return response.data.content
+MODEL_NAME = "gemini-3.8-flash"
+
+
+def test_ai_connection() -> str:
+    """Test that the Gemini API connection works."""
+    client = genai.Client()
+
+    response = client.models.generate_content(
+        model=MODEL_NAME,
+        contents="Reply with exactly: AI connection successful",
+    )
+
+    return response.text
+
 
 def main() -> None:
-    result = asyncio.run(test_ai_connection())
-    print(result)
+    """Run a simple Gemini API connection test."""
+    try:
+        result = test_ai_connection()
+        print("[OK] AI connection successful.")
+        print(result)
+    except Exception as error:
+        print("[ERROR] AI connection failed.")
+        print(error)
+
 
 if __name__ == "__main__":
     main()
+

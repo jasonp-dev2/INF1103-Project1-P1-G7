@@ -1,2 +1,2 @@
-github-copilot-sdk==1.0.14
+google-genai
 
