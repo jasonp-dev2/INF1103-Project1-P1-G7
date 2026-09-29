@@ -16,19 +16,6 @@ MODELS = [ #This is a list of models that will be tried in order until one retur
 client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
-
-
-def test_ai_connection() -> str: #This function will try to connect to the API and return a test response to ensure the connection is working.
-    """Test that the Gemini API connection works."""
-    client = genai.Client()
-
-    response = client.models.generate_content(
-        model=MODEL_NAME,
-        contents="Reply with exactly: AI connection successful",
-    )
-
-    return response.text
-
 def build_prompt(record): #This function will build the prompt that will be sent to the AI model.
     return f"""
 You are to analyse one supermarket product for expiry and waste risk.
