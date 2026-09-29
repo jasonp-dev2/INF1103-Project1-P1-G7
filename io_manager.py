@@ -1,3 +1,4 @@
+"""
 categories = ["Dairy & Eggs", "Bakery", "Meat & Seafood", "Fruits & Vegetables", "Frozen Food", "Beverages", "Other"]
 
 print("Assess a new product")
@@ -30,4 +31,17 @@ category = categories[category_choice - 1]
 
 print("Product name entered:", product_name)
 print("Quantity entered:", quantity)
-print("Category chosen:", category)
+print("Category chosen:", category) 
+"""
+def valid_product(Userinput):
+    if user_input.isdigit():
+        return "no"
+    else:
+        
+
+
+
+
+while True:
+    user_input=input("Please enter product name")
+
