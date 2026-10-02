@@ -1,0 +1,23 @@
+
+.env
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Runtime data and logs (created automatically)
+data/*.json
+data/*.tmp
+data/*.corrupt-*
+logs/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+.env
