@@ -35,6 +35,8 @@ print("Category chosen:", category)
 """
 
 from datetime import datetime, date, timedelta
+import json
+
 DATE_FORMAT= "%Y-%m-%d"
 current_date = date.today()
 minimum_expiry = current_date + timedelta(days=30)
@@ -47,7 +49,7 @@ def valid_product(Userinput):
 
 def valid_stock (Userinput):
     if user_input.isdigit():
-        return str(Userinput)
+        return (Userinput)
     else:
         return "no"
 
@@ -87,7 +89,22 @@ user_input=input("Please enter expiry date(yyyy-mm-dd):")
 while valid_date(user_input) == "no":
     print("Invalid date format or date too close to current date.(minimum 30 days from current date)")
     user_input=input("Please enter expiry date(yyyy-mm-dd):")
-product_expiry = valid_date(user_input)
+product_expiry = valid_date(user_input)# saving user input into varible
 print(f"{product_expiry}")#testing line
 
-uer_input=input("Please enter product price per unit:")
+user_input=input("Please enter product price per unit($):")
+while valid_stock(user_input) == "no" or valid_stock(user_input) == "":#checking if input is valid ie no number and blank
+    print("Invalid input Please enter a number")
+    user_input=input("Please enter product price per unit($):")
+product_price = float(user_input)# saving user input into variable and converting to float
+print(f"{product_price}")#testing line
+
+product_info = {# creating a dictionary to store product information
+    "name": product_name,
+    "category": product_category,
+    "quantity": product_amt,
+    "expiry_date": product_expiry.strftime(DATE_FORMAT),
+    "price_per_unit": product_price
+}
+#with open("product_info.json", "a") as file:
+#    json.dump(product_info, file)#creating and reading into json file 
