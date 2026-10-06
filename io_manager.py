@@ -38,27 +38,36 @@ from datetime import datetime, date
 DATE_FORMAT= "%y-%m-%d"
 
 
-
-
-
 def valid_product(Userinput):
     if user_input.isdigit():
         return "no"
     else:
         return str(Userinput)
-    
 
+def valid_stock (Userinput):
+    if user_input.isdigit():
+        return str(Userinput)
+    else:
+        return "no"
 
+print("----Assess a new product-----")
 user_input=input("Please enter product name:")
 while valid_product(user_input) == "no" or valid_product(user_input) == "":#checking if input is valid ie no number and blank
     print("Invalid input Please enter a product name")
     user_input=input("Please enter product name:")
-
 product_name= user_input# saving user input into varible 
 print(f"{product_name}")#testing line
 
-user_input=input("Enter current inventory amount:")
+print("Category:\n1. Dairy & Eggs\n2. Bakery\n3. Meat & Seafood\n4. Fruits & Vegetables\n5. Frozen Food\n6. Beverages\n7. Other")
+user_input=input("Please enter category number:")
+while user_input.isdigit() ==False:
+    print("Invalid input Please enter a number")
+    user_input=input("Please enter category number:")
+product_category= int(user_input)# saving user input into varible
 
-
-
-
+user_input=input("Quantity in stock:")
+while valid_stock(user_input) == "no" or valid_stock(user_input) == "":#checking if input is valid ie no number and blank
+    print("Invalid input Please enter a number")
+    user_input=input("Quantity in stock:")
+product_amt = int(user_input)# saving user input into varible
+print(f"{product_amt}")#testing line
