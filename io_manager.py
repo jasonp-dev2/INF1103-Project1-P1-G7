@@ -34,9 +34,10 @@ print("Quantity entered:", quantity)
 print("Category chosen:", category) 
 """
 
-from datetime import datetime, date
-DATE_FORMAT= "%y-%m-%d"
-
+from datetime import datetime, date, timedelta
+DATE_FORMAT= "%Y-%m-%d"
+current_date = date.today()
+minimum_expiry = current_date + timedelta(days=30)
 
 def valid_product(Userinput):
     if user_input.isdigit():
@@ -48,6 +49,16 @@ def valid_stock (Userinput):
     if user_input.isdigit():
         return str(Userinput)
     else:
+        return "no"
+
+def valid_date(userinput):
+    try:
+        expiry_date = date.strptime(userinput, DATE_FORMAT)
+        if expiry_date >= minimum_expiry:
+            return expiry_date
+        else:
+            return "no"
+    except ValueError:
         return "no"
 
 print("----Assess a new product-----")
@@ -71,3 +82,12 @@ while valid_stock(user_input) == "no" or valid_stock(user_input) == "":#checking
     user_input=input("Quantity in stock:")
 product_amt = int(user_input)# saving user input into varible
 print(f"{product_amt}")#testing line
+
+user_input=input("Please enter expiry date(yyyy-mm-dd):")
+while valid_date(user_input) == "no":
+    print("Invalid date format or date too close to current date.(minimum 30 days from current date)")
+    user_input=input("Please enter expiry date(yyyy-mm-dd):")
+product_expiry = valid_date(user_input)
+print(f"{product_expiry}")#testing line
+
+uer_input=input("Please enter product price per unit:")
