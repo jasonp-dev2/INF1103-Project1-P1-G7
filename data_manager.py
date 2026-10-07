@@ -26,3 +26,29 @@ def load_records() -> list:
             return json.load(file)
     except FileNotFoundError:
         return []
+
+#Save all records directly to the data file.
+def save_records(records: list) -> bool: 
+    path = get_data_file()
+    
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+
+        with path.open("w", encoding="utf-8") as file:
+            json.dump(records, file, indent=2)
+        return True
+    except OSError:
+        return False
+
+# Create a record using product from io_manager.py, ai_result from ai_manager.py, and decision from decision_manager.py
+def create_record(records: list, product: dict, ai_result: dict, decision: dict) -> dict:
+    #simple id gen combined with soft deletion flag
+    new_id = f"PRD-{len(records) + 1:04d}" #id example PRD-0001
+    
+    return {
+        "record_id": new_id,
+        "product": product, 
+        "ai_assessment": ai_result,
+        "decision": decision,
+        "is_deleted": False #for future use in case of CRUD implemenation of soft deletion
+    }
