@@ -52,3 +52,48 @@ def create_record(records: list, product: dict, ai_result: dict, decision: dict)
         "decision": decision,
         "is_deleted": False #for future use in case of CRUD implemenation of soft deletion
     }
+
+#sample filtering function
+def filter_near_expiry(records: list, days: int, today: date) -> list:
+    #Return records whose product expires within 'days' from today.
+    matches = []
+    for record in records:
+        expiry = date.fromisoformat(record["product"]["expiry_date"])
+        days_left = (expiry - today).days
+        if 0 <= days_left <= days:
+            matches.append(record)
+    return matches
+
+#sample filtering function for products near/past expiry, sorting days to expiry in ascending order including expired products (negative)
+def filter_and_sort_near_expiry(records: list, today: date, threshold_days: int = 30) -> list[dict]: #threshold days default of 30 days, user definable
+    matches = []
+    
+    for record in records:
+        #only selects non-deleted records
+        if record.get("is_deleted", False):
+            continue
+
+        expiry = date.fromisoformat(record["product"]["expiry_date"])
+        days_left = (expiry - today).days
+
+        # adds all records <30 days to expiry or already expired
+        if days_left < threshold_days:
+            matches.append({
+                "record": record,
+                "days_left": days_left
+            })
+            
+    #sort numbers in ascending order (e.g -15, -2, 1, 5, 29)
+    matches.sort(key=lambda item: item["days_left"])
+    return matches
+
+"""
+Example io_manager usage
+today = date.today()
+expiring_soon = filter_near_expiry(records, today=today, threshold_days=30)
+
+for item in expiring_soon:
+    name = item["record"]["product"]["Name"]
+    days = item["days_left"]
+    print(f"{name} expires in {days} day(s)")
+"""
