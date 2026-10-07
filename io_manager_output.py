@@ -1,39 +1,47 @@
-# Display the details of single product records
+# Displays the details of a single product record
 def display_record(record):
+    product = record["product"]
+
     print("\n--- Product Record ---")
     print("Record ID     :", record["record_id"])
-    print("Product       :", record["product"])
-    print("Quantity      :", record["quantity"])
-    print("Expiry date   :", record["expiry_date"])
-    print("Current price : $" + format(record["current_price"], ".2f"))
+    print("Product       :", product["product_name"])
+    print("Category      :", product["category"])
+    print("Quantity      :", product["quantity_in_stock"])
+    print("Expiry date   :", product["expiry_date"])
+    print("Current price : $" + format(product["current_price"], ".2f"))
 
-# Display all product records in the list
+# Displays all product records
 def display_list(records):
     print("\n--- Product List ---")
 
-    # Check if there are no saved product records
+    # Check if there are no product records
     if len(records) == 0:
         print("No product records found.")
         return
-    
+
     # Display each product record
     for record in records:
         display_record(record)
 
-# Displays the final result after the AI response has been processed by the logic manager
-def display_result(result):
-    print("\n--- Result ---")
-    print("Record ID       :", result["record_id"])
-    print("Product         :", result["product"])
-    print("Quantity        :", result["quantity"])
-    print("Expiry date     :", result["expiry_date"])
-    # Display price with 2 decimal places
-    print("Current price   : $" + format(result["current_price"], ".2f"))
-    print("AI risk level   :", result["risk_level"])
-    print("AI predicts     :", result["prediction"])
-    print("Outcome         :", result["outcome"])
-    print("Discount        :", result["discount"])
-    print("Waste cost      :", result["waste_cost"])
-    print("Reason          :", result["reason"])
+    # Sort records from closest expiry date to latest expiry date
+    sorted_records = sorted(records, key=lambda record: record["product"]["expiry_date"])
 
-    input("\nPress Enter to continue...")
+# Displays the final processed result
+def display_result(record):
+    product = record["product"]
+    ai = record["ai_assessment"]
+    decision = record["decision"]
+
+    print("\n--- Result ---")
+    print("Record ID       :", record["record_id"])
+    print("Product         :", product["product_name"], "(" + product["category"] + ")")
+    print("Quantity        :", product["quantity_in_stock"])
+    print("Expiry date     :", product["expiry_date"], "(" + str(decision["days_to_expiry"]) + " day(s) left)")
+    print("Current price   : $" + format(product["current_price"], ".2f"))
+    print("AI risk level   :", ai["risk_level"])
+    print("AI predicts     : about", ai["predicted_unsold_quantity"], "unit(s) unsold")
+    print("Outcome         :", decision["outcome"])
+    print("Discount        :", str(decision["discount_percent"]) + "%")
+    print("Final price     : $" + format(decision["final_price"], ".2f"))
+    print("Waste cost      : $" + format(decision["waste_cost_if_unsold"], ".2f"))
+    print("Reason          :", decision["reason"])
