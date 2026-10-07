@@ -10,6 +10,7 @@ def display_record(record):
     print("Expiry date   :", product["expiry_date"])
     print("Current price : $" + format(product["current_price"], ".2f"))
 
+
 # Displays all product records
 def display_list(records):
     print("\n--- Product List ---")
@@ -19,12 +20,16 @@ def display_list(records):
         print("No product records found.")
         return
 
-    # Display each product record
-    for record in records:
+    # Sort records from closest expiry date to latest expiry date
+    sorted_records = sorted(
+        records,
+        key=lambda record: record["product"]["expiry_date"]
+    )
+
+    # Display the sorted product records
+    for record in sorted_records:
         display_record(record)
 
-    # Sort records from closest expiry date to latest expiry date
-    sorted_records = sorted(records, key=lambda record: record["product"]["expiry_date"])
 
 # Displays the final processed result
 def display_result(record):
@@ -34,14 +39,20 @@ def display_result(record):
 
     print("\n--- Result ---")
     print("Record ID       :", record["record_id"])
-    print("Product         :", product["product_name"], "(" + product["category"] + ")")
+    print("Product         :", product["product_name"],
+          "(" + product["category"] + ")")
     print("Quantity        :", product["quantity_in_stock"])
-    print("Expiry date     :", product["expiry_date"], "(" + str(decision["days_to_expiry"]) + " day(s) left)")
+    print("Expiry date     :", product["expiry_date"],
+          "(" + str(decision["days_to_expiry"]) + " day(s) left)")
     print("Current price   : $" + format(product["current_price"], ".2f"))
     print("AI risk level   :", ai["risk_level"])
-    print("AI predicts     : about", ai["predicted_unsold_quantity"], "unit(s) unsold")
+    print("AI predicts     : about",
+          ai["predicted_unsold_quantity"], "unit(s) unsold")
     print("Outcome         :", decision["outcome"])
-    print("Discount        :", str(decision["discount_percent"]) + "%")
-    print("Final price     : $" + format(decision["final_price"], ".2f"))
-    print("Waste cost      : $" + format(decision["waste_cost_if_unsold"], ".2f"))
+    print("Discount        :", str(decision["discount_percent"]) + "%",
+          "-> final price $" + format(decision["final_price"], ".2f"))
+    print("Waste cost if unsold: $" +
+          format(decision["waste_cost_if_unsold"], ".2f"))
     print("Reason          :", decision["reason"])
+
+    input("\nPress Enter to continue...")
