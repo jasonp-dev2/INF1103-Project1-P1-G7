@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import time
 from datetime import date
 
 from dotenv import load_dotenv
@@ -14,15 +13,10 @@ logger = logging.getLogger(__name__)
 
 MODEL_NAMES = [
     "gemini-3.8-flash",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
+    "gemini-3.5-flash-lite",
 ]
 
-# Retry settings (per model, before falling back to the next one)
-RETRIES_PER_MODEL = 2
-RETRY_DELAY_SECONDS = 1.5
-
-# Temporary errors: worth retrying, then falling back
+# Temporary errors: worth trying the next model for
 RETRYABLE_CODES = {429, 500, 503, 504}
 
 # Model not found / not available to this key: skip straight to next model
@@ -39,6 +33,10 @@ REQUIRED_KEYS = [
     "predicted_unsold_quantity",
 ]
 
+# ---------------------------------------------------------------------------
+# Connect to Gemini
+# ---------------------------------------------------------------------------
+
 def create_client():
     api_key = os.getenv("GEMINI_API_KEY")
 
@@ -47,8 +45,13 @@ def create_client():
 
     return genai.Client(api_key=api_key)
 
+
 def is_configured() -> bool:
     return bool(os.getenv("GEMINI_API_KEY"))
+
+# ---------------------------------------------------------------------------
+# Write the prompt to AI
+# ---------------------------------------------------------------------------
 
 def build_prompt(product: dict, today: date) -> str:
     expiry = date.fromisoformat(product["expiry_date"])
@@ -76,18 +79,18 @@ Consider:
 
 Return only a JSON object with exactly these fields:
 {{
-  "risk_level": "low",
-  "recommended_discount_percent": 0,
-  "predicted_unsold_quantity": 0
+  "risk_level": "low" | "medium" | "high",
+  "recommended_discount_percent": integer from 0 to 90,
+  "predicted_unsold_quantity": integer from 0 to {product["quantity_in_stock"]}
 }}
 
 Rules:
-- risk_level must be low, medium, or high.
-- recommended_discount_percent must be a number from 0 to 100.
-- predicted_unsold_quantity must be a whole number from 0 to {product["quantity_in_stock"]}.
 - Do not include markdown or explanations outside the JSON.
-- These are estimates, not guaranteed outcomes.
 """
+
+# ---------------------------------------------------------------------------
+# Send the question and get a reply
+# ---------------------------------------------------------------------------
 
 def call_api(prompt: str) -> tuple:
     try:
@@ -97,50 +100,37 @@ def call_api(prompt: str) -> tuple:
         return "", ""
 
     for model_name in MODEL_NAMES:
-        for attempt in range(1, RETRIES_PER_MODEL + 1):
-            try:
-                response = client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                )
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+            )
 
-                if response.text:
-                    if model_name != MODEL_NAMES[0]:
-                        logger.info("Used fallback model: %s", model_name)
-                    return response.text.strip(), model_name
+            if response.text:
+                if model_name != MODEL_NAMES[0]:
+                    logger.info("Used fallback model: %s", model_name)
+                return response.text.strip(), model_name
 
-                logger.warning("%s returned an empty response.", model_name)
-                break  
+            logger.warning("%s returned an empty response.", model_name)
 
-            except errors.APIError as error:
-                code = getattr(error, "code", None)
+        except errors.APIError as error:
+            code = getattr(error, "code", None)
 
-                if code in SKIP_MODEL_CODES:
-                    logger.warning("%s not available (%s), trying next.", model_name, code)
-                    break
+            if code not in SKIP_MODEL_CODES and code not in RETRYABLE_CODES:
+                logger.error("Non-retryable Gemini error (%s): %s", code, error)
+                return "", ""
 
-                if code not in RETRYABLE_CODES:
-                    logger.error("Non-retryable Gemini error (%s): %s", code, error)
-                    return "", ""
+            logger.warning("%s failed (%s), trying next model.", model_name, code)
 
-                logger.warning(
-                    "%s attempt %d/%d failed (%s).",
-                    model_name, attempt, RETRIES_PER_MODEL, code,
-                )
-                if attempt < RETRIES_PER_MODEL:
-                    time.sleep(RETRY_DELAY_SECONDS)
+        except Exception as error:
+            logger.warning("%s failed: %s", model_name, error)
 
-            except Exception as error:
-                logger.warning(
-                    "%s attempt %d/%d failed: %s",
-                    model_name, attempt, RETRIES_PER_MODEL, error,
-                )
-                if attempt < RETRIES_PER_MODEL:
-                    time.sleep(RETRY_DELAY_SECONDS)
-
-    logger.error("All Gemini models failed.")
+    logger.error("All Gemini models failed.")     # Every model in the list was tried and none of them worked.
     return "", ""
 
+# ---------------------------------------------------------------------------
+# Turn the AI's text reply into a dictionary
+# ---------------------------------------------------------------------------
 
 def parse_response(raw_text: str) -> dict:
     if not raw_text:
@@ -163,6 +153,10 @@ def parse_response(raw_text: str) -> dict:
         return {}
 
     return data
+
+# ---------------------------------------------------------------------------
+# Double check whether the dictionary makes sense
+# ---------------------------------------------------------------------------
 
 def is_number(value) -> bool:
     return type(value) in [int, float]
@@ -202,6 +196,8 @@ def check_reply(raw_text: str, quantity: int, model_name: str) -> dict:
     if not is_valid_response(data, quantity):
         return make_failed_result("Gemini returned missing or invalid values.")
 
+    # All checks passed, build the final result
+
     return {
         "status": STATUS_OK,
         "risk_level": data["risk_level"],
@@ -209,6 +205,10 @@ def check_reply(raw_text: str, quantity: int, model_name: str) -> dict:
         "predicted_unsold_quantity": data["predicted_unsold_quantity"],
         "model_used": model_name,
     }
+
+# ---------------------------------------------------------------------------
+# Assess product and return the result
+# ---------------------------------------------------------------------------
 
 def assess_product(product: dict, today: date) -> dict:
     try:
@@ -226,27 +226,3 @@ def assess_product(product: dict, today: date) -> dict:
     except Exception as error:
         logger.error("Unexpected error in assess_product: %s", error)
         return make_failed_result("Unexpected error while assessing product.")
-
-def main():
-    logging.basicConfig(level=logging.INFO)
-
-    today = date.today()
-
-    sample_product = {
-        "product_name": "Organic Whole Milk",
-        "category": "Dairy & Eggs",
-        "quantity_in_stock": 500,
-        "expiry_date": "2026-10-01",
-        "current_price": 5,
-    }
-
-    print("\n--- Gemini AI Manager Test ---")
-
-    result = assess_product(sample_product, today)
-
-    print("\nAI Assessment:")
-    print(json.dumps(result, indent=4))
-
-
-if __name__ == "__main__":
-    main()
