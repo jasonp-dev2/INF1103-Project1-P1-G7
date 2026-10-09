@@ -63,15 +63,13 @@ def get_product_info():
  while valid_stock(Userinput) == "no" or valid_stock(Userinput) == "":#checking if input is valid ie no number and blank
     print("Invalid input Please enter a number")
     Userinput=input("Please enter product price per unit($):")
- product_price = float(Userinput)# saving user input into variable and converting to float
+ product_price = f"{float(Userinput):.2f}"# saving user input into variable and converting to float
 
- product_info = {# creating a dictionary to store product information
-    "name": product_name,
-    "category": product_category,
-    "quantity": product_amt,
-    "expiry_date": product_expiry,
-    "price_per_unit": product_price
+ product = {# creating a dictionary to store product information
+    "product_name": product_name,
+    "product_category": product_category,
+    "product_quantity": product_amt,
+    "product_expiry_date": product_expiry,
+    "product_price_per_unit": product_price
 }
- return product_info
-
-get_product_info()
+ return product
