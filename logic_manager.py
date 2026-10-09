@@ -1,4 +1,8 @@
 from datetime import date, datetime
+import json
+
+with open("products.json", "r") as file:
+    data = json.load(file)
 
 # Can be change depending on respective store
 NEAR_EXPIRY_DAYS = 7          
@@ -121,6 +125,51 @@ def evaluate(product: dict, ai_result: dict, today: date) -> dict:
         print(final)
         return final
 
+    # Rule3: If the AI failed, then will send it to a person.
+    if ai_result["status"] != STATUS_OK:
+        final = make_decision(
+            OUTCOME_MANUAL_REVIEW, "R3",
+            "The AI assessment was unavailable, so staff must review this item.",
+            days_left, 0, price, 0)
+        print(final)
+        return final
+
+    risk = ai_result["risk_level"]
+    ai_percent = ai_result["recommended_discount_percent"]
+    predicted_unsold = ai_result["predicted_unsold_quantity"]
+    unsold_ratio = calculate_unsold_ratio(predicted_unsold, quantity)
+    waste_cost = calculate_waste_cost(predicted_unsold, price)
+
+    # Rule4: Multi-condition rule using AI output. (Urgent)
+    #      Few days left AND high risk AND alot expected unsold.
+    if (days_left <= URGENT_DAYS and risk == "high" and unsold_ratio >= URGENT_UNSOLD_RATIO):
+        percent = max(ai_percent, URGENT_MIN_DISCOUNT)
+        percent = apply_discount_cap(percent, MAX_DISCOUNT_PERCENT)
+        final = make_decision(
+            OUTCOME_URGENT_DISCOUNT, "R4",
+            f"{days_left} day(s) left, high risk and about "
+            f"{predicted_unsold:.0f} unit(s) likely unsold.",
+            days_left, percent, price, waste_cost)
+        print(final)
+        return final
+
+    # Rule5: Normal discount: AI suggests a discount and risk is not low.
+    if ai_percent > 0 and risk != "low":
+        percent = apply_discount_cap(ai_percent, MAX_DISCOUNT_PERCENT)
+        final = make_decision(
+            OUTCOME_DISCOUNT, "R5",
+            f"Near expiry with {risk} risk - a discount is recommended.",
+            days_left, percent, price, waste_cost)
+        print(final)
+        return final
+
+    # Rule6: Keep an eye on it, no discount yet.
+    final = make_decision(
+        OUTCOME_MONITOR, "R7",
+        "Near expiry but low risk of waste - keep monitoring.",
+        days_left, 0, price, waste_cost)
+    print(final)
+    return final
 
 
 
@@ -132,6 +181,12 @@ product = {
     "quantity_in_stock": 10,
     "expiry_date": "2026-11-30",
     "current_price": 4.5,
+
+    "product_name": "Cookie",
+      "category": "Pantry & Dry Goods",
+      "quantity_in_stock": 100,
+      "expiry_date": "2026-10-10",
+      "current_price": 1.2,
 }
 
 ai_assessment = {
@@ -140,3 +195,6 @@ ai_assessment = {
     "recommended_discount_percent": 30,
     "predicted_unsold_quantity": 3
 }
+
+print("-"*50)
+evaluate(product, ai_assessment, date(2026,10,8))
