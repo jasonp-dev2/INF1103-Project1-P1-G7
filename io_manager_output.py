@@ -4,10 +4,10 @@ def display_record(record):
 
     print("\n--- Product Record ---")
     print("Record ID       :", record["record_id"])
-    print("Product         :", product["product_name"])
-    print("Category        :", product["category"])
-    print("Quantity        :", product["quantity_in_stock"])
-    print("Expiry date     :", product["expiry_date"])
+    print("Product         :", product["product_product_name"])
+    print("Category        :", product["product_category"])
+    print("Quantity        :", product["product_quantity"])
+    print("Expiry date     :", product["product_expiry_date"])
     print("Current price   : $" + format(product["current_price"], ".2f"))
 
 
@@ -45,8 +45,8 @@ def display_result(record):
     print("Record ID       :", record["record_id"])
     print("Product         :", product["product_name"],
           "(" + product["category"] + ")")
-    print("Quantity        :", product["quantity_in_stock"])
-    print("Expiry date     :", product["expiry_date"],
+    print("Quantity        :", product["product_quantity"])
+    print("Expiry date     :", product["product_expiry_date"],
           "(" + str(decision["days_to_expiry"]) + " day(s) left)")
     print("Current price   : $" + format(product["current_price"], ".2f"))
 
