@@ -3,12 +3,12 @@ def display_record(record):
     product = record["product"]
 
     print("\n--- Product Record ---")
-    print("Record ID     :", record["record_id"])
-    print("Product       :", product["product_name"])
-    print("Category      :", product["category"])
-    print("Quantity      :", product["quantity_in_stock"])
-    print("Expiry date   :", product["expiry_date"])
-    print("Current price : $" + format(product["current_price"], ".2f"))
+    print("Record ID       :", record["record_id"])
+    print("Product         :", product["product_name"])
+    print("Category        :", product["category"])
+    print("Quantity        :", product["quantity_in_stock"])
+    print("Expiry date     :", product["expiry_date"])
+    print("Current price   : $" + format(product["current_price"], ".2f"))
 
 
 # Displays all product records
@@ -26,9 +26,11 @@ def display_list(records):
         key=lambda record: record["product"]["expiry_date"]
     )
 
-    # Display the sorted product records
+    # Display each product record
     for record in sorted_records:
         display_record(record)
+
+    print("\nTotal records:", len(records))
 
 
 # Displays the final processed result
@@ -38,6 +40,8 @@ def display_result(record):
     decision = record["decision"]
 
     print("\n--- Result ---")
+
+    # Product information
     print("Record ID       :", record["record_id"])
     print("Product         :", product["product_name"],
           "(" + product["category"] + ")")
@@ -45,14 +49,34 @@ def display_result(record):
     print("Expiry date     :", product["expiry_date"],
           "(" + str(decision["days_to_expiry"]) + " day(s) left)")
     print("Current price   : $" + format(product["current_price"], ".2f"))
+
+    # AI assessment
     print("AI risk level   :", ai["risk_level"])
     print("AI predicts     : about",
-          ai["predicted_unsold_quantity"], "unit(s) unsold")
+          ai["predicted_unsold_quantity"],
+          "unit(s) unsold")
+
+    # Final decision from logic_manager
     print("Outcome         :", decision["outcome"])
-    print("Discount        :", str(decision["discount_percent"]) + "%",
-          "-> final price $" + format(decision["final_price"], ".2f"))
-    print("Waste cost if unsold: $" +
-          format(decision["waste_cost_if_unsold"], ".2f"))
+    print("Rule applied    :", decision["rule"])
+
+    print(
+        "Discount        :",
+        str(decision["discount_percent"]) + "%",
+        "-> final price $" + format(decision["final_price"], ".2f")
+    )
+
+    print(
+        "Waste cost if unsold: $" +
+        format(decision["waste_cost_if_unsold"], ".2f")
+    )
+
     print("Reason          :", decision["reason"])
+
+    # Check if staff approval is required
+    if decision["needs_staff_approval"]:
+        print("Staff approval  : REQUIRED")
+    else:
+        print("Staff approval  : NOT REQUIRED")
 
     input("\nPress Enter to continue...")
