@@ -1,8 +1,9 @@
 from datetime import date, datetime
 import json
 
-with open("products.json", "r") as file:
-    data = json.load(file)
+if __name__ == "__main__":
+    with open("products.json", "r") as file:
+        data = json.load(file)
 
 # Can be change depending on respective store
 NEAR_EXPIRY_DAYS = 7          
@@ -41,7 +42,8 @@ def days_until_expiry(expiry_date: str, today: date) -> int:
     return days_remaining
 
 # Example (-87 => expired)
-print(days_until_expiry("2026-07-26", date(2026, 10, 21)))
+if __name__ == "__main__":
+    print(days_until_expiry("2026-07-26", date(2026, 10, 21)))
 
 def apply_discount_cap(discount_percent: float, max_percent: float) -> float:
     if discount_percent > max_percent:
@@ -51,13 +53,15 @@ def apply_discount_cap(discount_percent: float, max_percent: float) -> float:
     return discount_percent
 
 # Example (Discount > Max)
-print(apply_discount_cap(50, 40))
+if __name__ == "__main__":
+    print(apply_discount_cap(50, 40))
 
 def calculate_final_price(price: float, discount_percent: float) -> float:
     return round(price * (1 - discount_percent / 100), 2)
 
 # Example ($20 with 10% discount)
-print(calculate_final_price(20, 10))
+if __name__ == "__main__":
+    print(calculate_final_price(20, 10))
 
 # To check proportion of stocks expected to remain unsold based on AI prediction
 def calculate_unsold_ratio(predicted_unsold: float, quantity: int) -> float:
@@ -66,14 +70,16 @@ def calculate_unsold_ratio(predicted_unsold: float, quantity: int) -> float:
     return predicted_unsold / quantity
 
 # Example (5 goods, AI predict 3 unsold) => 0.6 Ratio predicted to be unsold
-print(calculate_unsold_ratio(3, 5))
+if __name__ == "__main__":
+    print(calculate_unsold_ratio(3, 5))
 
 # To check money lost for predicted unsold stock
 def calculate_waste_cost(predicted_unsold: float, price: float) -> float:
     return round(predicted_unsold * price, 2)
 
 # Example (Predicted total lost = 30)
-print(calculate_waste_cost(3, 10))
+if __name__ == "__main__":
+    print(calculate_waste_cost(3, 10))
 
 # Create a dictionary to store information on what to do with product
 def make_decision(outcome: str, rule: str, reason: str, days_left: int,
@@ -174,27 +180,27 @@ def evaluate(product: dict, ai_result: dict, today: date) -> dict:
 
 
 #Example (product from io_manager, ai_result from ai_manager)
+if __name__ == "__main__":
+    product = {
+        "product_name": "Milk",
+        "category": "Dairy & Eggs",
+        "quantity_in_stock": 10,
+        "expiry_date": "2026-11-30",
+        "current_price": 4.5,
 
-product = {
-    "product_name": "Milk",
-    "category": "Dairy & Eggs",
-    "quantity_in_stock": 10,
-    "expiry_date": "2026-11-30",
-    "current_price": 4.5,
+        "product_name": "Cookie",
+        "category": "Pantry & Dry Goods",
+        "quantity_in_stock": 100,
+        "expiry_date": "2026-10-10",
+        "current_price": 1.2,
+    }
 
-    "product_name": "Cookie",
-      "category": "Pantry & Dry Goods",
-      "quantity_in_stock": 100,
-      "expiry_date": "2026-10-10",
-      "current_price": 1.2,
-}
+    ai_assessment = {
+        "status": "ok",
+        "risk_level": "high",
+        "recommended_discount_percent": 30,
+        "predicted_unsold_quantity": 3
+    }
 
-ai_assessment = {
-    "status": "ok",
-    "risk_level": "high",
-    "recommended_discount_percent": 30,
-    "predicted_unsold_quantity": 3
-}
-
-print("-"*50)
-evaluate(product, ai_assessment, date(2026,10,8))
+    print("-"*50)
+    evaluate(product, ai_assessment, date(2026,10,8))
