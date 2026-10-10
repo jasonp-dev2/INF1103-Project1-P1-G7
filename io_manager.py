@@ -191,9 +191,8 @@ def display_record(record: dict) -> None:
     print("Current price   : $" + format(product["current_price"], ".2f"))
 
 
-def display_list(records: list) -> None:
-    """Show a list of records, closest expiry date first."""
-    print("\n--- Product List ---")
+def display_list(records):
+    print("\n--- Product Stock Table ---")
 
     if len(records) == 0:
         print("No product records found.")
@@ -204,10 +203,64 @@ def display_list(records: list) -> None:
         key=lambda record: record["product"]["expiry_date"]
     )
 
+    # Column headings
+    heading = (
+        f"{'ID':<10} "
+        f"{'Product':<20} "
+        f"{'Qty':>5} "
+        f"{'Expiry':<10} "
+        f"{'Risk':<7} "
+        f"{'Unsold':>7} "
+        f"{'Discount':>9} "
+        f"{'Proposed $':>11} "
+        f"{'Approval':<12}"
+    )
+
+    print(heading)
+    print("-" * len(heading))
+
+    # One row for each product
     for record in sorted_records:
-        display_record(record)
+        product = record["product"]
+        ai = record["ai_assessment"]
+        decision = record["decision"]
+
+        if ai["status"] == "ok":
+            risk = ai["risk_level"]
+            unsold = str(ai["predicted_unsold_quantity"])
+        else:
+            risk = "N/A"
+            unsold = "N/A"
+
+        if decision["needs_staff_approval"]:
+            approved = record.get("staff_approved")
+
+            if approved is True:
+                approval = "Approved"
+            elif approved is False:
+                approval = "Rejected"
+            else:
+                approval = "Pending"
+        else:
+            approval = "Not required"
+
+        discount = str(decision["discount_percent"]) + "%"
+        proposed_price = format(decision["final_price"], ".2f")
+
+        print(
+            f"{record['record_id']:<10} "
+            f"{product['product_name'][:20]:<20} "
+            f"{product['quantity_in_stock']:>5} "
+            f"{product['expiry_date']:<10} "
+            f"{risk:<7} "
+            f"{unsold:>7} "
+            f"{discount:>9} "
+            f"{proposed_price:>11} "
+            f"{approval:<12}"
+        )
 
     print("\nTotal records:", len(records))
+    print("Proposed prices are recommendations subject to approval.")
 
 
 def display_result(record: dict) -> None:
