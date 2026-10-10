@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -134,9 +134,15 @@ def collect_menu_choice() -> str:
     print("1. Assess a new product")
     print("2. Show all products")
     print("3. Show products near expiry")
+    print("4. View product details")
     print("0. Exit")
     return input("Choose an option: ").strip()
 
+# Return an ID with surrounding spaces removed and letters made uppercase
+def collect_record_id() -> str:
+    return input(
+        "Enter record ID (e.g. PRD-0001): "
+    ).strip().upper()
 
 def collect_days_threshold() -> int:
     user_input = input("Show products expiring within how many days? ")
@@ -190,8 +196,8 @@ def display_record(record: dict) -> None:
     print("Expiry date     :", product["expiry_date"])
     print("Current price   : $" + format(product["current_price"], ".2f"))
 
-
 def display_list(records):
+    """Display saved assessments in a table sorted by expiry date, earliest first."""
     print("\n--- Product Stock Table ---")
 
     if len(records) == 0:
@@ -202,13 +208,14 @@ def display_list(records):
         records,
         key=lambda record: record["product"]["expiry_date"]
     )
-
+    today = date.today()
     # Column headings
     heading = (
         f"{'ID':<10} "
         f"{'Product':<20} "
         f"{'Qty':>5} "
         f"{'Expiry':<10} "
+        f"{'Status today':<13} "
         f"{'Risk':<7} "
         f"{'Unsold':>7} "
         f"{'Discount':>9} "
@@ -224,6 +231,15 @@ def display_list(records):
         product = record["product"]
         ai = record["ai_assessment"]
         decision = record["decision"]
+
+        expiry = date.fromisoformat(product["expiry_date"])
+
+        if expiry < today:
+            expiry_status = "EXPIRED"
+        elif expiry == today:
+            expiry_status = "Expires today"
+        else:
+            expiry_status = "Unexpired"
 
         if ai["status"] == "ok":
             risk = ai["risk_level"]
@@ -252,6 +268,7 @@ def display_list(records):
             f"{product['product_name'][:20]:<20} "
             f"{product['quantity_in_stock']:>5} "
             f"{product['expiry_date']:<10} "
+            f"{expiry_status:<13} "
             f"{risk:<7} "
             f"{unsold:>7} "
             f"{discount:>9} "
@@ -261,6 +278,7 @@ def display_list(records):
 
     print("\nTotal records:", len(records))
     print("Proposed prices are recommendations subject to approval.")
+    print("Expired products must not be sold, even if previously approved.")
 
 
 def display_result(record: dict) -> None:
@@ -269,6 +287,17 @@ def display_result(record: dict) -> None:
     ai = record["ai_assessment"]
     decision = record["decision"]
 
+    # Calculate days remaining today, do not overwrite the saved assessment.
+    expiry = date.fromisoformat(product["expiry_date"])
+    days_remaining = (expiry - date.today()).days
+
+    if days_remaining < 0:
+        expiry_status = f"Expired {abs(days_remaining)} day(s) ago"
+    elif days_remaining == 0:
+        expiry_status = "Expires today"
+    else:
+        expiry_status = f"{days_remaining} day(s) remaining"
+
     print("\n--- Result ---")
 
     # Product information
@@ -276,8 +305,14 @@ def display_result(record: dict) -> None:
     print("Product         :", product["product_name"],
           "(" + product["category"] + ")")
     print("Quantity        :", product["quantity_in_stock"])
-    print("Expiry date     :", product["expiry_date"],
-          "(" + str(decision["days_to_expiry"]) + " day(s) left)")
+    print("Expiry date     :", product["expiry_date"])
+    print("Expiry today    :", expiry_status)
+
+    if days_remaining < 0:
+        print("*** EXPIRED - DO NOT SELL ***")
+        print("Previous approval does not apply to an expired product.")
+    print("\n--- Saved assessment ---")
+    print("Days left when assessed:", decision["days_to_expiry"])
     print("Current price   : $" + format(product["current_price"], ".2f"))
 
     # AI assessment (a failed AI result has no risk level or prediction)
@@ -290,11 +325,11 @@ def display_result(record: dict) -> None:
         print("AI assessment   : unavailable")
 
     # Final decision from logic_manager
-    print("Outcome         :", decision["outcome"])
+    print("Saved outcome         :", decision["outcome"])
     print("Rule applied    :", decision["rule"])
-    print("Discount        :",
+    print("Saved discount  :",
           str(decision["discount_percent"]) + "%",
-          "-> final price $" + format(decision["final_price"], ".2f"))
+          "-> proposed price $" + format(decision["final_price"], ".2f"))
     print("Waste cost if unsold: $" + format(decision["waste_cost_if_unsold"], ".2f"))
     print("Reason          :", decision["reason"])
 

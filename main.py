@@ -74,6 +74,25 @@ def show_near_expiry_products(records: list) -> None:
     io_manager.display_list(matches)
     io_manager.wait_for_enter()
 
+def view_saved_assessment(records: list) -> None:
+    """Menu option 4: display one saved assessment."""
+    if not records:
+        io_manager.show_message("No saved assessments found.")
+        return
+
+    record_id = io_manager.collect_record_id()
+
+    for record in records:
+        if record["record_id"].upper() == record_id:
+            io_manager.show_message(
+                "\nShowing the previously recorded assessment."
+            )
+            io_manager.display_result(record)
+            return
+
+    io_manager.show_message(
+        "No record found with ID: " + record_id
+    )
 
 def run() -> None:
     load_dotenv()      # reads the API key from the .env file
@@ -99,8 +118,10 @@ def run() -> None:
                 show_all_products(records)
             elif choice == "3":
                 show_near_expiry_products(records)
+            elif choice == "4":
+                view_saved_assessment(records)
             else:
-                io_manager.show_message("Please enter 0, 1, 2 or 3.")
+                io_manager.show_message("Please enter 0, 1, 2, 3 or 4.")
             choice = io_manager.collect_menu_choice()
     except (KeyboardInterrupt, EOFError):
         io_manager.show_message("\nInput closed.")
