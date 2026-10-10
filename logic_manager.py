@@ -1,10 +1,6 @@
 from datetime import date, datetime
 import json
 
-if __name__ == "__main__":
-    with open("products.json", "r") as file:
-        data = json.load(file)
-
 # Can be change depending on respective store
 NEAR_EXPIRY_DAYS = 7          
 URGENT_DAYS = 3               
@@ -19,7 +15,6 @@ STATUS_OK = "ok"
 OUTCOME_EXPIRED = "EXPIRED"
 OUTCOME_NOT_NEAR_EXPIRY = "NOT_NEAR_EXPIRY"
 OUTCOME_MANUAL_REVIEW = "MANUAL_REVIEW"
-OUTCOME_NO_STACKING = "NO_STACKING"
 OUTCOME_URGENT_DISCOUNT = "URGENT_DISCOUNT"
 OUTCOME_DISCOUNT = "DISCOUNT_RECOMMENDED"
 OUTCOME_MONITOR = "MONITOR"
@@ -28,22 +23,16 @@ OUTCOMES = (
     OUTCOME_EXPIRED,
     OUTCOME_NOT_NEAR_EXPIRY,
     OUTCOME_MANUAL_REVIEW,
-    OUTCOME_NO_STACKING,
     OUTCOME_URGENT_DISCOUNT,
     OUTCOME_DISCOUNT,
     OUTCOME_MONITOR,
     )
-
 
 # Return how many days left until expiry (negative means expired)
 def days_until_expiry(expiry_date: str, today: date) -> int:
     expiry = datetime.strptime(expiry_date, "%Y-%m-%d").date()
     days_remaining = (expiry - today).days
     return days_remaining
-
-# Example (-87 => expired)
-if __name__ == "__main__":
-    print(days_until_expiry("2026-07-26", date(2026, 10, 21)))
 
 def apply_discount_cap(discount_percent: float, max_percent: float) -> float:
     if discount_percent > max_percent:
@@ -52,16 +41,9 @@ def apply_discount_cap(discount_percent: float, max_percent: float) -> float:
         return 0
     return discount_percent
 
-# Example (Discount > Max)
-if __name__ == "__main__":
-    print(apply_discount_cap(50, 40))
-
 def calculate_final_price(price: float, discount_percent: float) -> float:
     return round(price * (1 - discount_percent / 100), 2)
 
-# Example ($20 with 10% discount)
-if __name__ == "__main__":
-    print(calculate_final_price(20, 10))
 
 # To check proportion of stocks expected to remain unsold based on AI prediction
 def calculate_unsold_ratio(predicted_unsold: float, quantity: int) -> float:
@@ -69,17 +51,10 @@ def calculate_unsold_ratio(predicted_unsold: float, quantity: int) -> float:
         return 0
     return predicted_unsold / quantity
 
-# Example (5 goods, AI predict 3 unsold) => 0.6 Ratio predicted to be unsold
-if __name__ == "__main__":
-    print(calculate_unsold_ratio(3, 5))
 
 # To check money lost for predicted unsold stock
 def calculate_waste_cost(predicted_unsold: float, price: float) -> float:
     return round(predicted_unsold * price, 2)
-
-# Example (Predicted total lost = 30)
-if __name__ == "__main__":
-    print(calculate_waste_cost(3, 10))
 
 # Create a dictionary to store information on what to do with product
 def make_decision(outcome: str, rule: str, reason: str, days_left: int,
@@ -107,28 +82,23 @@ def evaluate(product: dict, ai_result: dict, today: date) -> dict:
     #If duplicate rules exist, then will take first rule
     
     days_left = days_until_expiry(product["expiry_date"], today)
-    print("\n" + str(days_left))
     price = product["current_price"]
     quantity = product["quantity_in_stock"]
 
     # Rule1: Never recommend an expired product. (Food safety)
     if days_left < 0:
-        print("Rule 1")
         final = make_decision(
             OUTCOME_EXPIRED, "R1",
             "The product has passed its expiry date and must not be sold.",
             days_left, 0, price, 0)
-        print(final)
         return final
 
     # Rule2: Only near-expiry products have discount.
     if days_left > NEAR_EXPIRY_DAYS:
-        print("Rule 2")
         final = make_decision(
             OUTCOME_NOT_NEAR_EXPIRY, "R2",
             f"{days_left} days left - not near expiry, no discount needed.",
             days_left, 0, price, 0)
-        print(final)
         return final
 
     # Rule3: If the AI failed, then will send it to a person.
@@ -137,7 +107,6 @@ def evaluate(product: dict, ai_result: dict, today: date) -> dict:
             OUTCOME_MANUAL_REVIEW, "R3",
             "The AI assessment was unavailable, so staff must review this item.",
             days_left, 0, price, 0)
-        print(final)
         return final
 
     risk = ai_result["risk_level"]
@@ -156,7 +125,6 @@ def evaluate(product: dict, ai_result: dict, today: date) -> dict:
             f"{days_left} day(s) left, high risk and about "
             f"{predicted_unsold:.0f} unit(s) likely unsold.",
             days_left, percent, price, waste_cost)
-        print(final)
         return final
 
     # Rule5: Normal discount: AI suggests a discount and risk is not low.
@@ -166,41 +134,15 @@ def evaluate(product: dict, ai_result: dict, today: date) -> dict:
             OUTCOME_DISCOUNT, "R5",
             f"Near expiry with {risk} risk - a discount is recommended.",
             days_left, percent, price, waste_cost)
-        print(final)
         return final
 
     # Rule6: Keep an eye on it, no discount yet.
     final = make_decision(
-        OUTCOME_MONITOR, "R7",
+        OUTCOME_MONITOR, "R6",
         "Near expiry but low risk of waste - keep monitoring.",
         days_left, 0, price, waste_cost)
-    print(final)
     return final
 
 
 
-#Example (product from io_manager, ai_result from ai_manager)
-if __name__ == "__main__":
-    product = {
-        "product_name": "Milk",
-        "category": "Dairy & Eggs",
-        "quantity_in_stock": 10,
-        "expiry_date": "2026-11-30",
-        "current_price": 4.5,
 
-        "product_name": "Cookie",
-        "category": "Pantry & Dry Goods",
-        "quantity_in_stock": 100,
-        "expiry_date": "2026-10-10",
-        "current_price": 1.2,
-    }
-
-    ai_assessment = {
-        "status": "ok",
-        "risk_level": "high",
-        "recommended_discount_percent": 30,
-        "predicted_unsold_quantity": 3
-    }
-
-    print("-"*50)
-    evaluate(product, ai_assessment, date(2026,10,8))
