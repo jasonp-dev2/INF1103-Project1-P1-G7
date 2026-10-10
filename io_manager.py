@@ -1,75 +1,260 @@
-from datetime import datetime, date, timedelta
-import json
+from datetime import datetime
 
-DATE_FORMAT= "%Y-%m-%d"
-current_date = date.today()
-minimum_expiry = current_date + timedelta(days=30)
+DATE_FORMAT = "%Y-%m-%d"
 
-def valid_product(Userinput):
-    if Userinput.isdigit():
+CATEGORIES = {
+    1: "Dairy & Eggs",
+    2: "Bakery",
+    3: "Meat & Seafood",
+    4: "Fruits & Vegetables",
+    5: "Frozen Food",
+    6: "Beverages",
+    7: "Other",
+}
+
+def valid_product(user_input: str):
+    # A product name must not be blank and must not be only digits
+    user_input = user_input.strip()
+    if user_input == "" or user_input.isdigit():
         return "no"
-    else:
-        return str(Userinput)
+    return user_input
 
-def valid_stock (Userinput):
-    if Userinput.isdigit():
-        return (Userinput)
-    else:
+
+def valid_category(user_input: str):
+    # Must be a whole number that is a key in CATEGORIES (1 to 7)
+    if not user_input.isdigit():
         return "no"
+    number = int(user_input)
+    if number not in CATEGORIES:
+        return "no"
+    return number
 
-def valid_date(Userinput):
+
+def valid_stock(user_input: str):
+    # Must be a whole number (0 or more)
+    if user_input.isdigit():
+        return int(user_input)
+    return "no"
+
+
+def valid_date(user_input: str):
+    # Only checks the format. Whether a product is expired or near expiry
+    # is decided by logic_manager, not here.
     try:
-        expiry_date = date.strptime(Userinput, DATE_FORMAT)
-        if expiry_date >= minimum_expiry:
-            return expiry_date
-        else:
-            return "no"
+        return datetime.strptime(user_input, DATE_FORMAT).date()
     except ValueError:
         return "no"
+    
+def valid_price(user_input: str):
+    # Must be a number above 0, decimals allowed (e.g. 4.50)
+    try:
+        price = float(user_input)
+    except ValueError:
+        return "no"
+    if price <= 0:
+        return "no"
+    return price
+
+def get_product_info() -> dict:
+    """Ask for one product's details. The keys match what ai_manager and
+    logic_manager expect."""
+    print("----Assess a new product-----")
+
+    # Product name
+    user_input = input("Please enter product name:")
+    while valid_product(user_input) == "no":
+        print("Invalid input. Please enter a product name (not blank, not only numbers)")
+        user_input = input("Please enter product name:")
+    product_name = valid_product(user_input)
+
+    # Category
+    print("Category:")
+    for number in CATEGORIES:
+        print(str(number) + ". " + CATEGORIES[number])
+    user_input = input("Please enter category number:")
+    while valid_category(user_input) == "no":
+        print("Invalid input. Please enter a number from 1 to " + str(len(CATEGORIES)))
+        user_input = input("Please enter category number:")
+    category_name = CATEGORIES[valid_category(user_input)]
+
+    # Quantity
+    user_input = input("Quantity in stock:")
+    while valid_stock(user_input) == "no":
+        print("Invalid input. Please enter a whole number")
+        user_input = input("Quantity in stock:")
+    quantity = valid_stock(user_input)
+
+    # Expiry date
+    user_input = input("Please enter expiry date(yyyy-mm-dd):")
+    while valid_date(user_input) == "no":
+        print("Invalid date. Please use the format yyyy-mm-dd")
+        user_input = input("Please enter expiry date(yyyy-mm-dd):")
+    expiry_date = valid_date(user_input)
+
+    # Price
+    user_input = input("Please enter product price per unit($):")
+    while valid_price(user_input) == "no":
+        print("Invalid input. Please enter a positive number (e.g. 4.50)")
+        user_input = input("Please enter product price per unit($):")
+    price = valid_price(user_input)
+
+    product = {
+        "product_name": product_name,
+        "category": category_name,
+        "quantity_in_stock": quantity,
+        "expiry_date": str(expiry_date),   # e.g. "2026-10-31"
+        "current_price": round(price, 2),
+    }
+    return product
+
+# ---------------------------------------------------------------------------
+# INPUT ENDS HERE
+# ---------------------------------------------------------------------------
 
 
 
-def get_product_info():
- print("----Assess a new product-----")
- Userinput=input("Please enter product name:")
- while valid_product(Userinput) == "no" or valid_product(Userinput) == "":#checking if input is valid ie no number and blank
-    print("Invalid input Please enter a product name")
-    Userinput=input("Please enter product name:")
- product_name= Userinput# saving user input into varible 
+
+# ---------------------------------------------------------------------------
+# Messages
+# ---------------------------------------------------------------------------
+
+def show_message(text: str) -> None:
+    print(text)
+def show_warning(text: str) -> None:
+    print("Warning: " + text)
+def wait_for_enter() -> None:
+    input("\nPress Enter to continue...")
 
 
- print("Category:\n1. Dairy & Eggs\n2. Bakery\n3. Meat & Seafood\n4. Fruits & Vegetables\n5. Frozen Food\n6. Beverages\n7. Other")
- Userinput=input("Please enter category number:")
- while Userinput.isdigit() ==False:
-    print("Invalid input Please enter a number")
-    Userinput=input("Please enter category number:")
- product_category= int(Userinput)# saving user input into varible
-
- Userinput=input("Quantity in stock:")
- while valid_stock(Userinput) == "no" or valid_stock(Userinput) == "":#checking if input is valid ie no number and blank
-    print("Invalid input Please enter a number")
-    user_input=input("Quantity in stock:")
- product_amt = int(Userinput)# saving user input into varible
+# ---------------------------------------------------------------------------
+# DISPLAY MENU OPTIONS
+# ---------------------------------------------------------------------------
+def collect_menu_choice() -> str:
+    print("\n===== Expiry & Discount Advisor =====")
+    print("1. Assess a new product")
+    print("2. Show all products")
+    print("3. Show products near expiry")
+    print("0. Exit")
+    return input("Choose an option: ").strip()
 
 
- Userinput=input("Please enter expiry date(yyyy-mm-dd):")
- while valid_date(Userinput) == "no":
-    print("Invalid date format or date too close to current date.(minimum 30 days from current date)")
-    Userinput=input("Please enter expiry date(yyyy-mm-dd):")
- product_expiry = valid_date(Userinput)# saving user input into varible
+def collect_days_threshold() -> int:
+    user_input = input("Show products expiring within how many days? ")
+    while not user_input.strip().isdigit():
+        print("Please enter a whole number.")
+        user_input = input("Show products expiring within how many days? ")
+    return int(user_input)
 
 
- Userinput=input("Please enter product price per unit($):")
- while valid_stock(Userinput) == "no" or valid_stock(Userinput) == "":#checking if input is valid ie no number and blank
-    print("Invalid input Please enter a number")
-    Userinput=input("Please enter product price per unit($):")
- product_price = f"{float(Userinput):.2f}"# saving user input into variable and converting to float
+# ---------------------------------------------------------------------------
+# STAFF APPROVAL, ALWAYS NEEDED SINCE IS PART OF OUR BUSIENSS RULES
+# ---------------------------------------------------------------------------
+def collect_staff_approval(decision: dict) -> bool:
+    """Ask staff to approve or reject the recommended discount."""
+    print("\n--- Staff approval needed ---")
+    print("Recommended discount:", str(decision["discount_percent"]) + "%",
+          "-> final price $" + format(decision["final_price"], ".2f"))
 
- product = {# creating a dictionary to store product information
-    "product_name": product_name,
-    "product_category": product_category,
-    "product_quantity": product_amt,
-    "product_expiry_date": product_expiry,
-    "product_price_per_unit": product_price
-}
- return product
+    answer = input("Approve this discount? (y/n): ").strip().lower()
+    while answer != "y" and answer != "n":
+        print("Please enter y or n")
+        answer = input("Approve this discount? (y/n): ").strip().lower()
+
+    return answer == "y"
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------------------------------------------------------------------------
+# Displaying records //// STARTING HERE IS THE OUTPUT
+# ---------------------------------------------------------------------------
+
+def display_record(record: dict) -> None:
+    """Show the details of a single product record."""
+    product = record["product"]
+
+    print("\n--- Product Record ---")
+    print("Record ID       :", record["record_id"])
+    print("Product         :", product["product_name"])
+    print("Category        :", product["category"])
+    print("Quantity        :", product["quantity_in_stock"])
+    print("Expiry date     :", product["expiry_date"])
+    print("Current price   : $" + format(product["current_price"], ".2f"))
+
+
+def display_list(records: list) -> None:
+    """Show a list of records, closest expiry date first."""
+    print("\n--- Product List ---")
+
+    if len(records) == 0:
+        print("No product records found.")
+        return
+
+    sorted_records = sorted(
+        records,
+        key=lambda record: record["product"]["expiry_date"]
+    )
+
+    for record in sorted_records:
+        display_record(record)
+
+    print("\nTotal records:", len(records))
+
+
+def display_result(record: dict) -> None:
+    """Show the final processed result of one assessment."""
+    product = record["product"]
+    ai = record["ai_assessment"]
+    decision = record["decision"]
+
+    print("\n--- Result ---")
+
+    # Product information
+    print("Record ID       :", record["record_id"])
+    print("Product         :", product["product_name"],
+          "(" + product["category"] + ")")
+    print("Quantity        :", product["quantity_in_stock"])
+    print("Expiry date     :", product["expiry_date"],
+          "(" + str(decision["days_to_expiry"]) + " day(s) left)")
+    print("Current price   : $" + format(product["current_price"], ".2f"))
+
+    # AI assessment (a failed AI result has no risk level or prediction)
+    if ai["status"] == "ok":
+        print("AI risk level   :", ai["risk_level"])
+        print("AI predicts     : about",
+              ai["predicted_unsold_quantity"],
+              "unit(s) unsold")
+    else:
+        print("AI assessment   : unavailable")
+
+    # Final decision from logic_manager
+    print("Outcome         :", decision["outcome"])
+    print("Rule applied    :", decision["rule"])
+    print("Discount        :",
+          str(decision["discount_percent"]) + "%",
+          "-> final price $" + format(decision["final_price"], ".2f"))
+    print("Waste cost if unsold: $" + format(decision["waste_cost_if_unsold"], ".2f"))
+    print("Reason          :", decision["reason"])
+
+    if decision["needs_staff_approval"]:
+        print("Staff approval  : REQUIRED")
+    else:
+        print("Staff approval  : NOT REQUIRED")
+
+    # Only exists if staff were asked
+    if "staff_approved" in record:
+        if record["staff_approved"]:
+            print("Staff decision  : APPROVED")
+        else:
+            print("Staff decision  : REJECTED")
+
+    wait_for_enter()
