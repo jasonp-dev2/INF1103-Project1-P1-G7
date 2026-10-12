@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import json
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -195,6 +196,10 @@ def display_record(record: dict) -> None:
     print("Quantity        :", product["quantity_in_stock"])
     print("Expiry date     :", product["expiry_date"])
     print("Current price   : $" + format(product["current_price"], ".2f"))
+    with open("products.json", "r") as file:# open file to read the json data
+        data = json.load(file)
+    print(f"Discount Percent: {data[0]['decision']['discount_percent']}%")# call keyword to get the value of discount percent
+    print(f"Final Price     : ${data[0]['decision']['final_price']:.2f}")# call keyword to get the value of final price
 
 def display_list(records):
     """Display saved assessments in a table sorted by expiry date, earliest first."""
