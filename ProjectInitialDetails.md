@@ -14,7 +14,6 @@ Product Name / Category
 Quantity In Stock
 Expiry date
 Current selling price
-Membership
 
 AI Processing Layer:
 
@@ -22,32 +21,28 @@ Dynamic Action Plans: AI analyses the product type, quantity, demand, and time r
 
 Estimate Waste Cost: AI predicts the amount of savings if the recommended action plan is executed.
 
-Predict Future Demand: AI uses previous sales data to estimate how much of the product is likely to be sold before its expiry date
+Predict Future Demand: AI estimates how much of the product is likely to be sold before its expiry date
 
 AI can help to generate these outputs:
 Identify products at risk of expiring
-Discounts based on time left to expiry date & demand for product 
-Predict future demand based on previous sales
+Discounts based on time left to expiry date 
 Estimate quantity that may remain unsold
 
 Logic Layer:
 Validate inputs such as quantity, price, and expiry date
 Check whether the product is near its expiry date
 Products that are not near expiry date won’t have discount recommendation
-If membership exists, no additional discount will be stacked but membership point can be still earned
 Calculate the final price after the recommended discount
 
-
 Data Layer: 
-Stores the product information in the database
-Retrieve existing product information from database
-Store and retrieve previous sale data for AI demand prediction
+Stores the product information in the data file
+Retrieve existing product information from data file
 Filter products based on expiry dates
-Update existing products information in the database
+Update existing products information in the data file
 
 Output Layer:
 Display product nearing their expiry dates  
-Display recommend discount percentages based on time to expiry and demand of product 
+Display recommend discount percentages based on time to expiry
 Display predicted unsold quantities
 Display formatted stock tables containing quantity, price, discount and expiry date
 
@@ -61,13 +56,10 @@ Cost regulation:
 The application must not recommend a 100% discount. A maximum discount should be set to ensure that product is still sold at a reasonable price
 
 Overlapping value 
-The application must not stack discounts on products that are already discounted due to a previous application recommendation or an ongoing store promotion 
-
-Membership:
-If a product already has an expiry-related discount, an additional membership discount will not be applied. However, eligible members can still earn membership points from the purchase 
+The application must not stack discounts on products that are already discounted due to a previous application recommendation
 
 Discount Approval
 AI-generated discounts are recommendations only and must be approved by staff before they are applied.
  
 
-Group Repository URL: https://github.com/jasonp-dev2/group7proj
+Group Repository URL: https://github.com/jasonp-dev2/INF1103-Project1-P1-G7
