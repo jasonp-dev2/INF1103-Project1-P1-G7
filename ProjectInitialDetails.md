@@ -1,7 +1,7 @@
 Problem Statement and Target Users
 
 Problem Statement:
-F&B merchants / supermarkets may throw out bulk batches of unsold, near expiry ingredients and products because staff or existing systems may not identify that the product is near its expiry date or  there is too much inventory to be sold within a short period of time . 
+F&B merchants / supermarkets may throw out bulk batches of unsold, near expiry ingredients and products because staff or existing systems may not identify that the product is near its expiry date or there is too much inventory to be sold within a short period of time . 
 
 Our application aims to help identify such products and recommend discounts early to help alleviate food and product waste.
 
@@ -63,3 +63,5 @@ AI-generated discounts are recommendations only and must be approved by staff be
  
 
 Group Repository URL: https://github.com/jasonp-dev2/INF1103-Project1-P1-G7
+
+*Project requires creating a .env file, with "GEMINI_API_KEY=" followed by an API key from gemini.
