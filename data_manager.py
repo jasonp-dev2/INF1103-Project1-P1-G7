@@ -77,7 +77,6 @@ def save_records(records: list) -> bool:
 
 # Create a record using product from io_manager.py, ai_result from ai_manager.py, and decision from decision_manager.py
 def create_record(records: list, product: dict, ai_result: dict, decision: dict) -> dict:
-    #simple id gen combined with soft deletion flag
     new_id = f"PRD-{len(records) + 1:04d}" #id example PRD-0001
     
     return {
@@ -85,7 +84,6 @@ def create_record(records: list, product: dict, ai_result: dict, decision: dict)
         "product": product, 
         "ai_assessment": ai_result,
         "decision": decision,
-     #   "is_deleted": False #for future use in case of CRUD implemenation of soft deletion
     }
 
 #filtering for products expiry
