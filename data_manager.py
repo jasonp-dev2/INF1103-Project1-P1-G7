@@ -16,16 +16,51 @@ def get_data_file() -> Path:
     return Path(file_path_string)
 
 
-"""Load all saved records from file as list, return [] if file is missing."""
-def load_records() -> list:
+# Status of the data file on disk
+FILE_OK = "ok"
+FILE_MISSING = "missing"
+FILE_CORRUPT = "corrupt"
+
+
+def get_file_status() -> str:
+    """Check the data file: FILE_OK, FILE_MISSING or FILE_CORRUPT."""
     path = get_data_file()
-    
+
+    if not path.exists():
+        return FILE_MISSING
+
     try:
-        # Path objects can be passed directly into the open() function
-        with path.open("r") as file:
-            return json.load(file)
-    except FileNotFoundError:
+        with path.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+    except (json.JSONDecodeError, OSError):
+        return FILE_CORRUPT
+
+    # The file must hold a list of records
+    if type(data) is not list:
+        return FILE_CORRUPT
+    return FILE_OK
+
+
+def load_records() -> list:
+    """Load all saved records as a list.
+    A missing file gives []. A corrupt file is renamed to <name>.corrupt
+    (so nothing is lost) and also gives []."""
+    path = get_data_file()
+    status = get_file_status()
+
+    if status == FILE_MISSING:
         return []
+
+    if status == FILE_CORRUPT:
+        try:
+            path.replace(path.with_name(path.name + ".corrupt"))
+        except OSError:
+            pass
+        return []
+
+    with path.open("r", encoding="utf-8") as file:
+        return json.load(file)
+
 
 #Save all records directly to the data file.
 def save_records(records: list) -> bool: 
@@ -50,7 +85,7 @@ def create_record(records: list, product: dict, ai_result: dict, decision: dict)
         "product": product, 
         "ai_assessment": ai_result,
         "decision": decision,
-        "is_deleted": False #for future use in case of CRUD implemenation of soft deletion
+     #   "is_deleted": False #for future use in case of CRUD implemenation of soft deletion
     }
 
 #sample filtering function
@@ -70,8 +105,8 @@ def filter_and_sort_near_expiry(records: list, today: date, threshold_days: int 
     
     for record in records:
         #only selects non-deleted records
-        if record.get("is_deleted", False):
-            continue
+       # if record.get("is_deleted", False):
+           # continue
 
         expiry = date.fromisoformat(record["product"]["expiry_date"])
         days_left = (expiry - today).days

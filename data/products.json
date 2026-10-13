@@ -1,1 +1,30 @@
-[]
+[
+  {
+    "record_id": "PRD-0001",
+    "product": {
+      "product_name": "Blueberry",
+      "category": "Fruits & Vegetables",
+      "quantity_in_stock": 50,
+      "expiry_date": "2026-10-15",
+      "current_price": 2.5
+    },
+    "ai_assessment": {
+      "status": "ok",
+      "risk_level": "medium",
+      "recommended_discount_percent": 30,
+      "predicted_unsold_quantity": 10,
+      "model_used": "gemini-3.5-flash-lite"
+    },
+    "decision": {
+      "outcome": "DISCOUNT_RECOMMENDED",
+      "rule": "R5",
+      "reason": "Near expiry with medium risk - a discount is recommended.",
+      "days_to_expiry": 5,
+      "discount_percent": 30,
+      "final_price": 1.75,
+      "waste_cost_if_unsold": 25.0,
+      "needs_staff_approval": true
+    },
+    "staff_approved": true
+  }
+]
