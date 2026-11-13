@@ -9,10 +9,11 @@ from datetime import date
 
 from dotenv import load_dotenv
 
-import ai_manager
 import data_manager
 import io_manager
 import logic_manager
+from AIManager.AIManager import AIManager
+
 
 
 def setup_logging() -> None:
@@ -25,7 +26,7 @@ def setup_logging() -> None:
     )
 
 
-def assess_new_product(records: list) -> None:
+def assess_new_product(records: list, ai_manager: AIManager) -> None:
     """Menu option 1: the full pipeline for one product."""
     today = date.today()
 
@@ -98,6 +99,9 @@ def run() -> None:
     load_dotenv()      # reads the API key from the .env file
     setup_logging()
 
+    # Initialize the refactored OOP Inventory AI Manager
+    ai_manager = AIManager()
+
     # data_manager copes with a missing or damaged file; we just tell the user
     if data_manager.get_file_status() == data_manager.FILE_CORRUPT:
         io_manager.show_warning("The saved data file was damaged. It was backed up "
@@ -105,7 +109,7 @@ def run() -> None:
     records = data_manager.load_records()
 
     io_manager.show_message("Loaded " + str(len(records)) + " saved record(s).")
-    if not ai_manager.is_configured():
+    if not ai_manager.ai_client.is_configured():
         io_manager.show_warning("No API key found. Products will go to manual review.")
 
     # try/except: Ctrl+C (or closed input) ends the program cleanly
@@ -113,7 +117,7 @@ def run() -> None:
         choice = io_manager.collect_menu_choice()
         while choice != "0":
             if choice == "1":
-                assess_new_product(records)
+                assess_new_product(records, ai_manager)
             elif choice == "2":
                 show_all_products(records)
             elif choice == "3":
