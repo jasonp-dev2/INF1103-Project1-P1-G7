@@ -2,6 +2,7 @@
 
 from datetime import datetime, date, timedelta
 import json
+from product import inputHandler
 
 DATE_FORMAT= "%Y-%m-%d"
 current_date = date.today()
@@ -65,12 +66,5 @@ while valid_stock(user_input) == "no" or valid_stock(user_input) == "":#checking
 product_price = float(user_input)# saving user input into variable and converting to float
 print(f"{product_price}")#testing line
 
-product_info = {# creating a dictionary to store product information
-    "name": product_name,
-    "category": product_category,
-    "quantity": product_amt,
-    "expiry_date": product_expiry.strftime(DATE_FORMAT),
-    "price_per_unit": product_price
-}
-#with open("product_info.json", "a") as file:
-#    json.dump(product_info, file)#creating and reading into json file 
+Product= inputHandler(product_name, product_category, product_amt, product_expiry, product_price)
+Product.display_info()
