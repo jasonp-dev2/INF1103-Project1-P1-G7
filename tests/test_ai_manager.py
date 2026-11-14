@@ -85,3 +85,59 @@ def test_build_prompt_rejects_invalid_price(product, price):
 
     with pytest.raises(ValueError, match="Price"):
         manager.build_prompt(product, date(2026, 11, 14))
+
+
+
+
+def test_parse_response_converts_json_into_dictionary():
+    manager = AIManager(OfflineProvider("offline-test"))
+
+    raw_text = """
+    {
+        "risk_level": "high",
+        "recommended_discount_percent": 40,
+        "predicted_unsold_quantity": 8
+    }
+    """
+
+    result = manager.parse_response(raw_text)
+
+    assert result == {
+        "risk_level": "high",
+        "recommended_discount_percent": 40,
+        "predicted_unsold_quantity": 8,
+    }
+    assert isinstance(result["recommended_discount_percent"], int)
+
+
+@pytest.mark.parametrize(
+    "raw_text",
+    [
+        "",
+        "   ",
+        "This product looks risky.",
+        '{"risk_level": "high",}',
+        '```json\n{"risk_level": "high"}\n```',
+    ],
+)
+def test_parse_response_rejects_empty_or_malformed_json(raw_text):
+    manager = AIManager(OfflineProvider("offline-test"))
+
+    with pytest.raises(ValueError, match="AI returned"):
+        manager.parse_response(raw_text)
+
+
+@pytest.mark.parametrize(
+    "raw_text",
+    [
+        "[]",
+        "null",
+        "42",
+        '"hello"',
+    ],
+)
+def test_parse_response_rejects_json_that_is_not_an_object(raw_text):
+    manager = AIManager(OfflineProvider("offline-test"))
+
+    with pytest.raises(ValueError, match="JSON object"):
+        manager.parse_response(raw_text)

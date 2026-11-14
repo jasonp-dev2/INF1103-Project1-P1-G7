@@ -63,3 +63,20 @@ class AIManager:
             + "Product data:\n"
             + json.dumps(details, allow_nan=False)
         )
+    def parse_response(self, raw_text: str) -> dict:
+        """Convert AI reponse text into python dict."""
+        if not isinstance(raw_text, str) or not raw_text.strip():
+            raise ValueError("AI returned an empty or non-text response.")
+
+        try:
+            data = json.loads(raw_text)
+        except json.JSONDecodeError as error:
+            raise ValueError("AI returned invalid JSON.") from error
+
+        if not isinstance(data,dict):
+            raise ValueError("AI response must be a JSON object.")
+
+
+        return data
+
+    
