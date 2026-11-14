@@ -5,6 +5,12 @@ from datetime import date
 from .ai_provider import AIProvider
 
 class AIManager:
+    REQUIRED_KEYS = {
+        "risk_level",
+        "recommended_discount_percent",
+        "predicted_unsold_quantity",
+    }
+
     def __init__(self, provider: AIProvider):
         self._provider = provider
 
@@ -78,5 +84,30 @@ class AIManager:
 
 
         return data
+
+    def validate_response(self, data: dict, quantity: int) -> None:
+        """Reject incomplete or invalid AI assessments"""
+
+        if type(quantity) is not int or quantity < 0:
+            raise ValueError("Stock must be a non-negative integer.")
+
+        if not isinstance(data,dict) or set(data) != self.REQUIRED_KEYS:
+            raise ValueError("AI response has missing or unexpected fields.")
+                
+        if data["risk_level"] not in ("low", "medium", "high"):
+            raise ValueError("AI risk level must be low, medium or high.")
+
+        discount = data["recommended_discount_percent"]
+        if(
+            type(discount) not in (int,float)
+            or not math.isfinite(discount)
+            or not 0 <= discount <= 100
+        ):
+            raise ValueError("AI discount must be a finite number from 0 to 100.")
+
+        unsold = data["predicted_unsold_quantity"]
+        if type(unsold) is not int or not 0 <= unsold <= quantity:
+            raise ValueError("AI unsold quantity must be an integer within stock.")
+        
 
     

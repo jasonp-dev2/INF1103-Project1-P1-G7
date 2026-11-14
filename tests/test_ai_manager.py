@@ -141,3 +141,85 @@ def test_parse_response_rejects_json_that_is_not_an_object(raw_text):
 
     with pytest.raises(ValueError, match="JSON object"):
         manager.parse_response(raw_text)
+
+
+@pytest.mark.parametrize(
+    "risk, discount, unsold, quantity",
+    [
+        ("low", 0, 0, 0),
+        ("medium", 20.5, 3, 10),
+        ("high", 100, 10, 10),
+    ],
+)
+def test_parse_and_validate_accept_valid_assessments(
+    risk, discount, unsold, quantity
+):
+    manager = AIManager(OfflineProvider("offline-test"))
+
+    expected = {
+        "risk_level": risk,
+        "recommended_discount_percent": discount,
+        "predicted_unsold_quantity": unsold,
+    }
+
+    # Simulate response text arriving from a provider.
+    raw_text = json.dumps(expected)
+
+    data = manager.parse_response(raw_text)
+    manager.validate_response(data, quantity)
+
+    # Validation checks the assessment without changing its values.
+    assert data == expected
+
+
+@pytest.fixture
+def valid_assessment():
+    return {
+        "risk_level": "high",
+        "recommended_discount_percent": 40,
+        "predicted_unsold_quantity": 8,
+    }
+
+
+def test_validate_response_rejects_missing_field(valid_assessment):
+    manager = AIManager(OfflineProvider("offline-test"))
+    del valid_assessment["risk_level"]
+
+    with pytest.raises(ValueError, match="missing or unexpected"):
+        manager.validate_response(valid_assessment, quantity=10)
+
+
+def test_validate_response_rejects_extra_field(valid_assessment):
+    manager = AIManager(OfflineProvider("offline-test"))
+    valid_assessment["extra_advice"] = "Sell everything"
+
+    with pytest.raises(ValueError, match="missing or unexpected"):
+        manager.validate_response(valid_assessment, quantity=10)
+
+
+
+@pytest.mark.parametrize(
+    "field, value",
+    [
+        ("risk_level", "extreme"),
+        ("recommended_discount_percent", True),
+        ("recommended_discount_percent", "20"),
+        ("recommended_discount_percent", -1),
+        ("recommended_discount_percent", 101),
+        ("recommended_discount_percent", float("nan")),
+        ("recommended_discount_percent", float("inf")),
+        ("predicted_unsold_quantity", True),
+        ("predicted_unsold_quantity", 1.5),
+        ("predicted_unsold_quantity", -1),
+        ("predicted_unsold_quantity", 11),
+        ("predicted_unsold_quantity", "5"),
+    ],
+)
+def test_validate_response_rejects_invalid_values(
+    valid_assessment, field, value
+):
+    manager = AIManager(OfflineProvider("offline-test"))
+    valid_assessment[field] = value
+
+    with pytest.raises(ValueError):
+        manager.validate_response(valid_assessment, quantity=10)
