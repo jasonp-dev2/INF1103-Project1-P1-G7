@@ -4,7 +4,7 @@ import json
 from datetime import date
 from ai_oop.ai_manager import AIManager
 from ai_oop.ai_provider import AIProvider
-
+from ai_oop.ai_provider_error import AIProviderError
 
 class OfflineProvider(AIProvider):
     """A test provider that must not make any AI request."""
@@ -223,3 +223,96 @@ def test_validate_response_rejects_invalid_values(
 
     with pytest.raises(ValueError):
         manager.validate_response(valid_assessment, quantity=10)
+
+
+class StubProvider(AIProvider):
+    """Returns a chosen response or simulates a provider failure."""
+
+    def __init__(self, response: str = "", error: str | None = None):
+        self._response = response
+        self._error = error
+        self.prompts: list[str] = []
+
+    @property
+    def model_name(self) -> str:
+        return "test-model"
+
+    def generate(self, prompt: str) -> str:
+        self.prompts.append(prompt)
+
+        if self._error is not None:
+            raise AIProviderError(self._error)
+
+        return self._response
+
+def test_assess_product_runs_the_complete_pipeline(
+    product, valid_assessment
+):
+    provider = StubProvider(
+        response=json.dumps(valid_assessment)
+    )
+    manager = AIManager(provider)
+
+    result = manager.assess_product(product, date(2026, 11, 14))
+
+    assert result == {
+        "status": "ok",
+        **valid_assessment,
+        "model_used": "test-model",
+    }
+
+    # Confirm that the manager actually called the provider once.
+    assert len(provider.prompts) == 1
+
+    # Confirm that the provider received this product's information.
+    prompt_data = json.loads(
+        provider.prompts[0].split("Product data:\n", 1)[1]
+    )
+    assert prompt_data["product_name"] == product["product_name"]
+    assert prompt_data["days_until_expiry"] == 2
+
+
+def test_assess_product_handles_provider_failure(product):
+    provider = StubProvider(error="Service unavailable")
+    manager = AIManager(provider)
+
+    result = manager.assess_product(product, date(2026, 11, 14))
+
+    assert result == {
+        "status": "failed",
+        "error": "Service unavailable",
+    }
+    assert len(provider.prompts) == 1
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        "not JSON",
+        "{}",
+        json.dumps({
+            "risk_level": "high",
+            "recommended_discount_percent": 40,
+            "predicted_unsold_quantity": 11,
+        }),
+    ],
+)
+def test_assess_product_handles_invalid_response(product, response):
+    manager = AIManager(StubProvider(response=response))
+
+    result = manager.assess_product(product, date(2026, 11, 14))
+
+    assert result["status"] == "failed"
+    assert result["error"]
+    assert set(result) == {"status", "error"}
+
+
+def test_invalid_product_does_not_call_provider(product):
+    provider = StubProvider()
+    manager = AIManager(provider)
+    product["quantity_in_stock"] = -1
+
+    result = manager.assess_product(product, date(2026, 11, 14))
+
+    assert result["status"] == "failed"
+    assert provider.prompts == []

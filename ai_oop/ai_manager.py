@@ -1,10 +1,12 @@
 import json
 import math
 from datetime import date
-
+from .ai_provider_error import AIProviderError
 from .ai_provider import AIProvider
 
 class AIManager:
+    STATUS_OK = "ok"
+    STATUS_FAILED = "failed"
     REQUIRED_KEYS = {
         "risk_level",
         "recommended_discount_percent",
@@ -108,6 +110,47 @@ class AIManager:
         unsold = data["predicted_unsold_quantity"]
         if type(unsold) is not int or not 0 <= unsold <= quantity:
             raise ValueError("AI unsold quantity must be an integer within stock.")
-        
+
+    def assess_product(self, product: dict, today: date) -> dict:
+        """Run the AI assessment pipeline and return its result."""
+
+        # Stage 1: Validate product details and build prompt.
+
+        try:
+            prompt = self.build_prompt(product, today)
+        except (TypeError,ValueError,OverflowError,RecursionError):
+            return self._failed_result("Product data is missing or invalid.")
+
+        # Stage 2: ask the supplied provider for a response.
+        try:
+            raw_text = self._provider.generate(prompt)
+        except AIProviderError as error:
+            return self._failed_result(str(error))
+
+        # Stage 3: parse and validate the returned assessment.
+        try:
+            data = self.parse_response(raw_text)
+            self.validate_response(
+                data,
+                product["quantity_in_stock"],
+            )
+        except (TypeError, ValueError, OverflowError, RecursionError):
+            return self._failed_result(
+                "AI returned malformed JSON or invalid field values."
+            )
+
+        # All stages succeeded.
+        return {
+            "status": self.STATUS_OK,
+            **data,
+            "model_used": self.model_name,
+        }
+
+    def _failed_result(self, message: str) -> dict:
+        """Build a consistent failure result without invented estimates."""
+        return {
+            "status": self.STATUS_FAILED,
+            "error": message,
+        }
 
     
