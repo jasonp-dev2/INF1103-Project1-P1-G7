@@ -316,3 +316,14 @@ def test_invalid_product_does_not_call_provider(product):
 
     assert result["status"] == "failed"
     assert provider.prompts == []
+
+
+def test_missing_product_field_does_not_call_provider(product):
+    provider = StubProvider()
+    manager = AIManager(provider)
+    del product["expiry_date"]
+
+    result = manager.assess_product(product, date(2026, 11, 14))
+
+    assert result["status"] == "failed"
+    assert provider.prompts == []

@@ -118,7 +118,7 @@ class AIManager:
 
         try:
             prompt = self.build_prompt(product, today)
-        except (TypeError,ValueError,OverflowError,RecursionError):
+        except (KeyError,TypeError,ValueError,OverflowError,RecursionError):
             return self._failed_result("Product data is missing or invalid.")
 
         # Stage 2: ask the supplied provider for a response.
@@ -136,7 +136,7 @@ class AIManager:
             )
         except (TypeError, ValueError, OverflowError, RecursionError):
             return self._failed_result(
-                "AI returned malformed JSON or invalid field values."
+                "AI returned malformed JSON or invalid field values"
             )
 
         # All stages succeeded.
