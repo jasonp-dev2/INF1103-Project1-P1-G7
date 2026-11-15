@@ -1,5 +1,7 @@
 from datetime import datetime, date
 import json
+from classes.Inputhandler import inputHandler
+from classes.product import product
 
 DATE_FORMAT = "%Y-%m-%d"
 
@@ -16,9 +18,7 @@ CATEGORIES = {
 def valid_product(user_input: str):
     # A product name must not be blank and must not be only digits
     user_input = user_input.strip()
-    if user_input == "" or user_input.isdigit():
-        return "no"
-    return user_input
+    
 
 
 def valid_category(user_input: str):
@@ -56,6 +56,7 @@ def valid_price(user_input: str):
         return "no"
     return price
 
+"""
 def get_product_info() -> dict:
     """Ask for one product's details. The keys match what ai_manager and
     logic_manager expect."""
@@ -99,15 +100,11 @@ def get_product_info() -> dict:
         user_input = input("Please enter product price per unit($):")
     price = valid_price(user_input)
 
-    product = {
-        "product_name": product_name,
-        "category": category_name,
-        "quantity_in_stock": quantity,
-        "expiry_date": str(expiry_date),   # e.g. "2026-10-31"
-        "current_price": round(price, 2),
-    }
-    return product
+    product = inputHandler(product_name, category_name, quantity, expiry_date, price)
 
+    
+    return product
+"""
 # ---------------------------------------------------------------------------
 # INPUT ENDS HERE
 # ---------------------------------------------------------------------------
