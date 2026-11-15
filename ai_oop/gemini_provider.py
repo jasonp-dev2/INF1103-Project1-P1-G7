@@ -25,7 +25,12 @@ class GeminiProvider(AIProvider):
                 api_key=self._api_key,
                 http_options=types.HttpOptions(
                     timeout=30000,
-                    retry_options=types.HttpRetryOptions(attempts=1),
+                    retry_options=types.HttpRetryOptions(
+                        attempts=3,
+                        initial_delay=1,
+                        max_delay=4,
+                        http_status_codes=[500,503,504],
+                        ),
                 ),
             ) as client:
                 response = client.models.generate_content(
@@ -33,6 +38,11 @@ class GeminiProvider(AIProvider):
                     contents=prompt,
                     config=types.GenerateContentConfig(
                         response_mime_type="application/json",
+                        automatic_function_calling=(
+                            types.AutomaticFunctionCallingConfig(
+                                disable=True,
+                            )
+                        )
                     ),
                 )
 
