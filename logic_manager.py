@@ -183,16 +183,16 @@ def evaluate(product: dict, ai_result: dict, today: date) -> dict:
 if __name__ == "__main__":
     product = {
         "product_name": "Milk",
-        "category": "Dairy & Eggs",
-        "quantity_in_stock": 10,
-        "expiry_date": "2026-11-30",
-        "current_price": 4.5,
+        "product_category": "Dairy & Eggs",
+        "product_quantity": 10,
+        "product_expiry_date": "2026-11-30",
+        "product_current_price": 4.5,
 
         "product_name": "Cookie",
-        "category": "Pantry & Dry Goods",
-        "quantity_in_stock": 100,
-        "expiry_date": "2026-10-10",
-        "current_price": 1.2,
+        "product_category": "Pantry & Dry Goods",
+        "product_quantity": 100,
+        "product_expiry_date": "2026-10-10",
+        "product_current_price": 1.2,
     }
 
     ai_assessment = {
