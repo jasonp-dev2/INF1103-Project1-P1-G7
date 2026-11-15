@@ -1,7 +1,7 @@
 from datetime import date, datetime
 
 class OutputHandler:
-    """Display the records staff"""
+    """Display the records to staff"""
 
     def __init__(self, today: date | None = None) -> None:
         self._fixed_date: date | None = today
@@ -25,6 +25,13 @@ class OutputHandler:
 
     def show_warning(self, text: str) -> None:
         print("Warning: " + text)
+
+    def display_approval_request(self, decision: dict) -> None:
+        """Show the recommendation before InputHandler collects y/n."""
+        print("\n--- Staff approval needed ---")
+        print(f"Recommended discount: {decision['discount_percent']}%")
+        print(f"Proposed price: ${decision['final_price']:.2f}")
+        print("Reason:", decision["reason"])
 
     def wait_for_enter(self) -> None:
         """Pause after a display when the caller asks for it."""
