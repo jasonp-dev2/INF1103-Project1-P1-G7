@@ -1,5 +1,4 @@
 
-from classes.Inputhandler import inputHandler
 
 
 class product:
@@ -22,6 +21,6 @@ class product:
         if not self.product:
             print("No products available.")
             return
-        for product in self.product:
-            product.display_info()
+        for item in self.product:
+            item.display_info()
             print("--------------------")
