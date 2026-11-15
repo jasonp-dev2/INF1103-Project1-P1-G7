@@ -2,7 +2,7 @@
 
 from datetime import datetime, date, timedelta
 import json
-from product import inputHandler
+from classes.Inputhandler import inputHandler
 
 DATE_FORMAT= "%Y-%m-%d"
 current_date = date.today()
