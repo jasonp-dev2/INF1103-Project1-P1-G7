@@ -1,0 +1,13 @@
+[project]
+name = "INF1103-Project-P1-G7"
+version = "1.0.0"
+description = "AI-assisted CLI that helps supermarket staff reduce food waste by triaging near-expiry stock."
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+# Let the tests import main.py and the four manager files from the project root
+pythonpath = ["."]
+# Look for tests in the tests/ folder
+testpaths = ["tests"]
+# Show each test's name when running
+addopts = "-v"

@@ -1,0 +1,400 @@
+commit 14cb7660bbaedf190a4f9b922307df543c973608
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Tue Oct 13 18:02:55 2026 +0800
+
+    slight cleanup
+    
+    removed commented soft deletion flag
+
+commit b2c99cd41fc8812f363d41b90fbf5a34b11a0b57
+Merge: d6deaf7 ff7ed8a
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Tue Oct 13 17:43:43 2026 +0800
+
+    Merge pull request #6 from jasonp-dev2/data_manager-cleanup
+    
+    data_manager cleanup and editing of ProjectInitialDetails
+
+commit ff7ed8aca1674c802e331c107a3741fe0ce6e219
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Tue Oct 13 17:42:38 2026 +0800
+
+    data_manager cleanup and editing of ProjectInitialDetails
+
+commit d6deaf78cb1ea2bd80f5270e0cf38fd6aa6198cd
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Tue Oct 13 16:05:49 2026 +0800
+
+    Delete .DS_Store
+
+commit 0187a4d45c5185d691b5b6578cd1ada01952541b
+Merge: 2789409 c90a5f9
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Tue Oct 13 16:04:16 2026 +0800
+
+    Merge pull request #5 from jasonp-dev2/integration-fixes
+    
+    Integration fixes
+    
+    READY TO BUILD DOCKER IMAGE
+
+commit c90a5f98b853d51ba7ce474b2a4b5fe2e84fd5fa
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Tue Oct 13 11:37:36 2026 +0800
+
+    create a file called .env, then copy this code, and replace "your_api_key_here" with an API key from gemini.
+
+commit 1a87de6a2ec5dff4a7e80653fe6d74067d5a8713
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Mon Oct 12 13:34:44 2026 +0800
+
+    update to io_manager.py
+    
+    change out open file
+
+commit 27a75bde15dc8b7b548ba19f789d936f9b63361f
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Mon Oct 12 13:09:45 2026 +0800
+
+    add discount percent and price to option2
+    
+    new feature
+
+commit 4855a05290314aea65d7cc2fcd55a69ef46a5c6a
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Mon Oct 12 11:01:39 2026 +0800
+
+    Added automated test script for logic manager. 26 tests for now.
+
+commit 1572bbe2a6e6fe3a27915e1e1a1c75fe3411d99f
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Mon Oct 12 10:50:49 2026 +0800
+
+    not required
+
+commit 67ad44b907c53d9b1fa204e9eb7dc9c246e5c5e9
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 23:37:52 2026 +0800
+
+    Add product detail view and current expiry status
+
+commit 494e2a6cc030895952a3e7e4d27e25862b9b325b
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 22:11:49 2026 +0800
+
+    Updated display function to show in a table format
+
+commit a7a56b9b9e8f3c95980f792d609b35ba4d8dad29
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 20:02:10 2026 +0800
+
+    First product listed in json.
+
+commit 0230e7f0bf33a82915e5a2a3ab4e8eb383d7cc15
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 20:01:36 2026 +0800
+
+    Deleted io_manager_output since already merged into io_manager.
+
+commit cf3dd85bc8cbd38aa68da25b105cb91798613c94
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 19:54:18 2026 +0800
+
+    connecting the dots
+
+commit 583f9dd42533d7055da3b888b3ce8467fa5aad09
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 19:54:03 2026 +0800
+
+    removed nostacking, and self testing lines. + added test logic manager
+
+commit f7016dd87896e1f501440f75411e0b0383cebe20
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 19:52:24 2026 +0800
+
+    Handle missing and corrupt data file in data_manager + added test data manager
+
+commit 2dc1ae7d35b8395141a2d480b17308e97ecf050e
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 19:51:30 2026 +0800
+
+    Merge io_manager_output into io_manager + created test empty test file
+
+commit 27894098460ebe8d89ddb1d11214880f558d21b2
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Sat Oct 10 11:54:27 2026 +0800
+
+    initial docker setup, added toml file to link to pytests. + test ai manager
+
+commit 59e50693789b26976bb0a27effbe25835f928e1a
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 12:02:38 2026 +0800
+
+    update
+
+commit 343fa28e1adc467545fa853f8d21f3797141787b
+Merge: 65709aa 6d300c2
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 11:01:34 2026 +0800
+
+    Merge branch 'main' of https://github.com/jasonp-dev2/INF1103-Project1-P1-G7
+
+commit 6d300c27861893a74e3695a94e7db5043317ba02
+Author: val-lllll <2603872@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 11:01:32 2026 +0800
+
+    Delete product_data.py
+
+commit 65709aa55d85540281e38e76fc5c19c23b170eb7
+Merge: f71e39a 8d04340
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 11:01:05 2026 +0800
+
+    Merge branch 'main' of https://github.com/jasonp-dev2/INF1103-Project1-P1-G7
+
+commit a77302e3a7ff59470d2de1da0749369cc3f5d28f
+Merge: 8d04340 a9a4535
+Author: Muhammad Danish Bin Aziz <104403770+d-n1sh@users.noreply.github.com>
+Date:   Fri Oct 9 10:59:37 2026 +0800
+
+    Merge pull request #4 from jasonp-dev2/danish
+    
+    Fixed examples not appearing in main
+
+commit a9a4535a014c61cea65866be43270b97de7fba15
+Author: Danish <2605662@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 10:57:49 2026 +0800
+
+    Fixed examples not appearing in main
+
+commit f71e39af5aed1a73e30522c390c141dcc22d0424
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 10:53:25 2026 +0800
+
+    function convert
+
+commit 8d04340856d0056ac188d1bbdf1d418373beca9b
+Merge: d87917e 9a6d61d
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 10:51:00 2026 +0800
+
+    Merge branch 'valecia'
+
+commit 9a6d61d57f1f87f207b4f0f9226d5eab8cd15bed
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 10:46:40 2026 +0800
+
+    update the display function
+
+commit d87917ee37338af1f911e1e7205ae75fabbcd281
+Merge: 8ed727a 60305aa
+Author: Muhammad Danish Bin Aziz <104403770+d-n1sh@users.noreply.github.com>
+Date:   Fri Oct 9 10:14:17 2026 +0800
+
+    Merge pull request #3 from jasonp-dev2/danish
+    
+    Danish
+
+commit 60305aa7500b22bbd88a5a323925a802d0f53199
+Author: Danish <2605662@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 10:12:59 2026 +0800
+
+    Added rules 3 to 5
+
+commit 8ed727a007d488ccfca392d8fed30f0cc911f5fc
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 10:06:38 2026 +0800
+
+    merge
+
+commit d5c6745315e515021dd1607c1640a0fe89a03f0c
+Author: Ryan <2602955@sit.singaporetech.edu.sg>
+Date:   Fri Oct 9 10:03:51 2026 +0800
+
+    merge
+
+commit c24a59a9c3e6ddf6a55a2a2388a4d0ff021b37bc
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Thu Oct 8 20:21:03 2026 +0800
+
+    dropped retrys, and left 2 MODELS
+
+commit d61c1c96dd618a24e4091a847f207f9c62336b54
+Merge: e888a1f 02bbfac
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Wed Oct 7 18:43:49 2026 +0800
+
+    Merge pull request #2 from jasonp-dev2/jason
+    
+    basic implementation of data_manger layer
+
+commit 02bbfacad695a4eae71c746c32d93e8dd5f97493
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Wed Oct 7 18:39:24 2026 +0800
+
+    Added sample filter_and_sort_near_expiry() function and example usage in io_manager
+
+commit cf545d00fc4b031359ccf7f4cafb8086c05e3c52
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Wed Oct 7 18:24:23 2026 +0800
+
+    Added create_record() funciton
+
+commit 1e47d34c86ece924c0f55f9d00a5035e96e2ab63
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Wed Oct 7 16:38:57 2026 +0800
+
+    add product input to JSON
+
+commit b5201be27a062aad83b9e1345849314e806f9f58
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Wed Oct 7 16:25:42 2026 +0800
+
+    sort product records by expiry date
+
+commit b59bcf08ba270252578206c2d05b368e857abd76
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Wed Oct 7 16:12:58 2026 +0800
+
+    sort product records by expiry date
+
+commit 039e754e70af2a0917ec370dca4b141185a0a517
+Author: Danish <2605662@sit.singaporetech.edu.sg>
+Date:   Sun Oct 4 23:43:10 2026 +0800
+
+    Added evaluate function for business rules
+
+commit 2b40b427b392b51da7e11dc70cdb3e9648663d1c
+Author: Danish <2605662@sit.singaporetech.edu.sg>
+Date:   Sun Oct 4 23:15:06 2026 +0800
+
+    Added make_decision function and examples
+
+commit e888a1f47c42b7668916963017f814b93f294da4
+Merge: be35bc2 a32a907
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Thu Oct 1 13:41:03 2026 +0800
+
+    Merge pull request #1 from jasonp-dev2/jinyu
+    
+    Jinyu
+
+commit be35bc26d0d18d18ec316fbc573941575698c975
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Thu Oct 1 13:38:16 2026 +0800
+
+    cleanup
+
+commit c3a428c626160d512b0c8da61257cd5aeef8f02e
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Thu Oct 1 13:22:55 2026 +0800
+
+    added ignore .env
+
+commit a32a907f8c214ad5b48e5760c9dbede8842c323d
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Thu Oct 1 13:21:01 2026 +0800
+
+    clean up
+
+commit a1cb92492f2ab16252522d6d7ddad77d67a8161d
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Thu Oct 1 13:19:32 2026 +0800
+
+    fixed AI prompt
+
+commit 43f0f5302b5aca677c0049d60d203454afe2d46b
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 23:02:30 2026 +0800
+
+    added comments
+
+commit 441920bea5132d8d92433c4c2063d6a65515c660
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 22:48:06 2026 +0800
+
+    add AI result display function
+
+commit 7fb2b7728de3843d1a4066de0adf8691e99b42b1
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 22:35:38 2026 +0800
+
+    Add display list function
+
+commit 0218c4448f7d5509ae6e475418270617ead2c78f
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 22:27:53 2026 +0800
+
+    Add display_record function
+
+commit 9b18b92937d540c3dd7753718c29f107a0a9cadc
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Tue Sep 29 18:21:42 2026 +0800
+
+    Added load_records() function
+
+commit 4e2179f5d1c40a6676f3cca24e936896c4bc6c37
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Tue Sep 29 17:53:11 2026 +0800
+
+    Added get_data_file(), import necessary libraries, placeholder json file
+
+commit b9a3846cd7ac1244a4d5d742881498ce5f66324e
+Author: jasonp-dev2 <jasonphua2002@gmail.com>
+Date:   Tue Sep 29 17:50:06 2026 +0800
+
+    Inital commit for data_manager.py
+
+commit de66a654aa371a52e3b4f60b1e033d830abb904e
+Author: Danish <2605662@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 16:58:01 2026 +0800
+
+    Added functions to check for respective conditions (expirydate, discount, waste cost etc)
+
+commit 7e5497588e8fe00a0d21e4282248f1c4fdc8f88e
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 16:28:16 2026 +0800
+
+    1. USE: pip install -r requirements.txt ,2.   create a file called .env    , inside the file put GEMINI_API_KEY=your_actual_key_here.
+
+commit a0ce88d67f21812749eb1f86344d1f4dd3a7aca0
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 16:13:12 2026 +0800
+
+    changed to gemini api
+
+commit 104fad4b5bd7f6b4c5ac347b0d02a2aec513ec3e
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 15:31:02 2026 +0800
+
+    AI library & set up environment part 1
+
+commit f00cd6c682d2944606058ea4539bedb1f2cd01cc
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Tue Sep 29 15:13:08 2026 +0800
+
+    ignore irrelevant cache files, important api keys, so you wont push in.
+
+commit e0695cb457488d4e16bf8610d2c327d5a302cfdb
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Mon Sep 28 01:02:46 2026 +0800
+
+    try try first
+
+commit b29c7442c94d1fee8826c18dedfffde459abcd94
+Author: LIM JIN YU <2602974@sit.singaporetech.edu.sg>
+Date:   Mon Sep 28 00:25:57 2026 +0800
+
+    added required py files
+
+commit f3bbf997c24c448452e2e653120aefe560945c28
+Author: val-lllll <2603872@sit.singaporetech.edu.sg>
+Date:   Thu Sep 17 22:13:09 2026 +0800
+
+    Update ProjectInitialDetails.md
+
+commit d7cb1eabf67cf108bfe9974ecb8674fd274c1f74
+Author: Valecia Chia Hui Tong <2603872@sit.singaporetech.edu.sg>
+Date:   Thu Sep 17 22:08:12 2026 +0800
+
+    Added initial project details
