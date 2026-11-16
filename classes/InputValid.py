@@ -6,7 +6,6 @@ DATE_FORMAT = "%Y-%m-%d"
 class inputvalid:
     #check for valid product info
     @staticmethod
-
     def valid_product_name(product_name: str):
         if product_name == "" or product_name.isdigit():
             return "no"

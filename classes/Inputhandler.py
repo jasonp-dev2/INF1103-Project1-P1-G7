@@ -1,14 +1,54 @@
-from classes.InputValid import inputvalid
+from classes.productCatergory import productCategory
 from datetime import datetime , date
 
 
 class inputHandler:
-    def __init__(self, product_name, product_category, product_amt, product_expiry, product_price):
-        self.product_name = product_name
-        self.product_category = product_category
-        self.product_amt = product_amt
-        self.product_expiry = product_expiry
-        self.product_price = product_price
+    @staticmethod
+    def valid_product_name(product_name: str):
+        if product_name == "" or product_name.isdigit():
+                return "no"
+        return product_name
+
+    @staticmethod
+    def valid_category(category_number: str):
+        if not category_number.isdigit():
+                    return "no"
+        number = int(category_number)
+        return number
+    
+    @staticmethod
+    def valid_stock(quantity: str):
+        # Must be a whole number (0 or more)
+        if quantity.isdigit():
+            return int(quantity)
+        return "no"
+    
+    @staticmethod
+    def valid_date(date_str: str):
+    # Only checks the format. Whether a product is expired or near expiry
+    # is decided by logic_manager, not here.
+        try:
+            return datetime.strptime(date_str, DATE_FORMAT).date()
+        except ValueError:
+            return "no"
+    
+    @staticmethod
+    def valid_price(price: str):
+    # Must be a number above 0, decimals allowed (e.g. 4.50)
+        try:
+         price = float(price)
+        except ValueError:
+            return "no"
+        if price <= 0:
+            return "no"
+        return price
+
+
+    
+    @staticmethod
+    def collect_record_id():
+        record_id = input("Please enter the record ID: ")
+        return record_id
 
     def display_info(self):
         print(f"Product Name: {self.product_name}")
@@ -30,34 +70,34 @@ class inputHandler:
     def collect_product_info():
         # Collect product information from the user
         product_name = input("Please enter product name:")
-        while inputvalid.valid_product_name(product_name) == "no":
+        while inputHandler.valid_product_name(product_name) == "no":
             print("Invalid product name. Please try again.")
             product_name = input("Please enter product name:")
 
         category_number = input("Please enter product category number:")
-        while inputvalid.valid_category(category_number) == "no":
+        while inputHandler.valid_category(category_number) == "no":
             print("Invalid category number. Please try again.")
             category_number = input("Please enter product category number:")
         category_number = int(category_number)
 
         quantity = input("Please enter quantity in stock:")
-        while inputvalid.valid_stock(quantity) == "no":
+        while inputHandler.valid_stock(quantity) == "no":
             print("Invalid quantity. Please try again.")
             quantity = input("Please enter quantity in stock:")
         quantity = int(quantity)
 
         expiry_date_str = input("Please enter expiry date (YYYY-MM-DD):")
-        while inputvalid.valid_date(expiry_date_str) == "no":
+        while inputHandler.valid_date(expiry_date_str) == "no":
             print("Invalid date format. Please try again.")
             expiry_date_str = input("Please enter expiry date (YYYY-MM-DD):")
         expiry_date = datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
 
         price = input("Please enter product price per unit($):")
-        while inputvalid.valid_price(price) == "no":
+        while inputHandler.valid_price(price) == "no":
             print("Invalid price. Please try again.")
             price = input("Please enter product price per unit($):")
         price = float(price)
 
-        new_item = inputHandler(product_name, category_number, quantity, expiry_date, price)
+        new_item = productCategory(product_name, category_number, quantity, expiry_date, price)
         return new_item
 

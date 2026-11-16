@@ -15,96 +15,9 @@ CATEGORIES = {
     7: "Other",
 }
 
-def valid_product(user_input: str):
-    # A product name must not be blank and must not be only digits
-    user_input = user_input.strip()
-    
 
 
-def valid_category(user_input: str):
-    # Must be a whole number that is a key in CATEGORIES (1 to 7)
-    if not user_input.isdigit():
-        return "no"
-    number = int(user_input)
-    if number not in CATEGORIES:
-        return "no"
-    return number
 
-
-def valid_stock(user_input: str):
-    # Must be a whole number (0 or more)
-    if user_input.isdigit():
-        return int(user_input)
-    return "no"
-
-
-def valid_date(user_input: str):
-    # Only checks the format. Whether a product is expired or near expiry
-    # is decided by logic_manager, not here.
-    try:
-        return datetime.strptime(user_input, DATE_FORMAT).date()
-    except ValueError:
-        return "no"
-    
-def valid_price(user_input: str):
-    # Must be a number above 0, decimals allowed (e.g. 4.50)
-    try:
-        price = float(user_input)
-    except ValueError:
-        return "no"
-    if price <= 0:
-        return "no"
-    return price
-
-"""
-def get_product_info() -> dict:
-    """Ask for one product's details. The keys match what ai_manager and
-    logic_manager expect."""
-    print("----Assess a new product-----")
-
-    # Product name
-    user_input = input("Please enter product name:")
-    while valid_product(user_input) == "no":
-        print("Invalid input. Please enter a product name (not blank, not only numbers)")
-        user_input = input("Please enter product name:")
-    product_name = valid_product(user_input)
-
-    # Category
-    print("Category:")
-    for number in CATEGORIES:
-        print(str(number) + ". " + CATEGORIES[number])
-    user_input = input("Please enter category number:")
-    while valid_category(user_input) == "no":
-        print("Invalid input. Please enter a number from 1 to " + str(len(CATEGORIES)))
-        user_input = input("Please enter category number:")
-    category_name = CATEGORIES[valid_category(user_input)]
-
-    # Quantity
-    user_input = input("Quantity in stock:")
-    while valid_stock(user_input) == "no":
-        print("Invalid input. Please enter a whole number")
-        user_input = input("Quantity in stock:")
-    quantity = valid_stock(user_input)
-
-    # Expiry date
-    user_input = input("Please enter expiry date(yyyy-mm-dd):")
-    while valid_date(user_input) == "no":
-        print("Invalid date. Please use the format yyyy-mm-dd")
-        user_input = input("Please enter expiry date(yyyy-mm-dd):")
-    expiry_date = valid_date(user_input)
-
-    # Price
-    user_input = input("Please enter product price per unit($):")
-    while valid_price(user_input) == "no":
-        print("Invalid input. Please enter a positive number (e.g. 4.50)")
-        user_input = input("Please enter product price per unit($):")
-    price = valid_price(user_input)
-
-    product = inputHandler(product_name, category_name, quantity, expiry_date, price)
-
-    
-    return product
-"""
 # ---------------------------------------------------------------------------
 # INPUT ENDS HERE
 # ---------------------------------------------------------------------------
