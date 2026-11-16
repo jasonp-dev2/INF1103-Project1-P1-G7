@@ -63,8 +63,10 @@ class inputHandler:
         print("2. Show all products")
         print("3. Show products near expiry")
         print("4. View product details")
+        print("5. Update product stock")
+        print("6. Delete product")
         print("0. Exit")
-        return input("Please enter your choice (0-4): ")
+        return input("Please enter your choice (0-6): ")
     
     @staticmethod
     def collect_product_info():
