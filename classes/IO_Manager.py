@@ -1,60 +1,60 @@
+from datetime import date, datetime
 from classes.productCatergory import productCategory
-from datetime import datetime , date
+
+DATE_FORMAT = "%Y-%m-%d"
 
 class IO_Manager:
+    def __init__(self, today: date | None = None) -> None:
+        self._fixed_date = today
+
     @staticmethod
-    def valid_product_name(product_name: str):
-        if product_name == "" or product_name.isdigit():
-                return "no"
+    def valid_product_name(product_name: str) -> str | None:
+        product_name = product_name.strip()
+        if not product_name or product_name.isdigit():
+            return None
         return product_name
 
     @staticmethod
-    def valid_category(category_number: str):
+    def valid_category(category_number: str) -> int | str:
+        try:
+            number = int(category_number)
+        except ValueError:
+            return "no"
+        if not 1 <= number <= 7:
+            return "no"
+        return number
+
+    @staticmethod
+    def valid_stock(quantity: str) -> int | str:
+        if not quantity.isdecimal():
+            return "no"
+        try:
+            return int(quantity)
+        except ValueError:
+            return "no"
+
+    @staticmethod
+    def valid_date(date_str: str) -> date | str:
+        try:
+            return datetime.strptime(date_str.strip(), DATE_FORMAT).date()
+        except ValueError:
+            return "no"
+
+    @staticmethod
+    def valid_category(category_number: str) -> float | str:
         if not category_number.isdigit():
                     return "no"
         number = int(category_number)
         return number
-    
-    @staticmethod
-    def valid_stock(quantity: str):
-        # Must be a whole number (0 or more)
-        if quantity.isdigit():
-            return int(quantity)
-        return "no"
-    
-    @staticmethod
-    def valid_date(date_str: str):
-    # Only checks the format. Whether a product is expired or near expiry
-    # is decided by logic_manager, not here.
-        try:
-            return datetime.strptime(date_str, DATE_FORMAT).date()
-        except ValueError:
-            return "no"
-    
-    @staticmethod
-    def valid_price(price: str):
-    # Must be a number above 0, decimals allowed (e.g. 4.50)
-        try:
-         price = float(price)
-        except ValueError:
-            return "no"
-        if price <= 0:
-            return "no"
-        return price
 
     @staticmethod
-    def collect_record_id():
-        record_id = input("Please enter the record ID: ")
-        return record_id
+    def collect_record_id() -> str:
+        return input("Please enter the record ID: ")
 
-    def display_info(self):
-        print(f"Product Name: {self.product_name}")
-        print(f"Product Category: {self.product_category}")
-        print(f"Product Amount: {self.product_amt}")
-        print(f"Product Expiry Date: {self.product_expiry}")
-        print(f"Product Price per Unit: ${self.product_price:.2f}")
+    def display_info(self, record: dict) -> None:
+        self.display_record(record)
 
-    def collect_menu_choices(self):
+    def collect_menu_choices(self) -> str:
         print("\n===== Expiry & Discount Advisor =====")
         print("1. Assess a new product")
         print("2. Show all products")
@@ -64,46 +64,40 @@ class IO_Manager:
         print("6. Delete product")
         print("0. Exit")
         return input("Please enter your choice (0-6): ")
-    
+
     @staticmethod
-    def collect_product_info():
-        # Collect product information from the user
-        product_name = input("Please enter product name:")
-        while IO_Manager.valid_product_name(product_name) == "no":
+    def collect_product_info() -> productCategory:
+        name_prompt = "Please enter product name: "
+        product_name = IO_Manager.valid_product_name(input(name_prompt))
+        while product_name is None:
             print("Invalid product name. Please try again.")
-            product_name = input("Please enter product name:")
+            product_name = IO_Manager.valid_product_name(input(name_prompt))
 
-        category_number = input("Please enter product category number:")
-        while IO_Manager.valid_category(category_number) == "no":
+        category_prompt = "Please enter product category number (1-7): "
+        category_number = IO_Manager.valid_category(input(category_prompt))
+        while category_number == "no":
             print("Invalid category number. Please try again.")
-            category_number = input("Please enter product category number:")
-        category_number = int(category_number)
+            category_number = IO_Manager.valid_category(input(category_prompt))
 
-        quantity = input("Please enter quantity in stock:")
-        while IO_Manager.valid_stock(quantity) == "no":
+        quantity_prompt = "Please enter quantity in stock: "
+        quantity = IO_Manager.valid_stock(input(quantity_prompt))
+        while quantity == "no":
             print("Invalid quantity. Please try again.")
-            quantity = input("Please enter quantity in stock:")
-        quantity = int(quantity)
+            quantity = IO_Manager.valid_stock(input(quantity_prompt))
 
-        expiry_date_str = input("Please enter expiry date (YYYY-MM-DD):")
-        while IO_Manager.valid_date(expiry_date_str) == "no":
+        expiry_prompt = "Please enter expiry date (YYYY-MM-DD): "
+        expiry_date = IO_Manager.valid_date(input(expiry_prompt))
+        while expiry_date == "no":
             print("Invalid date format. Please try again.")
-            expiry_date_str = input("Please enter expiry date (YYYY-MM-DD):")
-        expiry_date = datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
+            expiry_date = IO_Manager.valid_date(input(expiry_prompt))
 
-        price = input("Please enter product price per unit($):")
-        while IO_Manager.valid_price(price) == "no":
+        price_prompt = "Please enter product price per unit ($): "
+        price = IO_Manager.valid_price(input(price_prompt))
+        while price == "no":
             print("Invalid price. Please try again.")
-            price = input("Please enter product price per unit($):")
-        price = float(price)
+            price = IO_Manager.valid_price(input(price_prompt))
 
-        new_item = productCategory(product_name, category_number, quantity, expiry_date, price)
-        return new_item
-
-    """OUTPUT"""
-
-    def __init__(self, today: date | None = None) -> None:
-        self._fixed_date: date | None = today
+        return productCategory(product_name, category_number, quantity, expiry_date, price)
 
     def _today(self) -> date:
         return self._fixed_date if self._fixed_date is not None else date.today()
@@ -111,7 +105,7 @@ class IO_Manager:
     def _parse_expiry(self, value: str) -> date | None:
         """Accept saved dates such as 2026-10-09 and older 2026-10-9."""
         try:
-            return datetime.strptime(value, "%Y-%m-%d").date()
+            return datetime.strptime(value, DATE_FORMAT).date()
         except ValueError:
             return None
 
