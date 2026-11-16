@@ -2,6 +2,34 @@ import unittest
 from datetime import date
 from logicManagerClass import logicManager, OUTCOME_DISCOUNT, OUTCOME_URGENT_DISCOUNT
 
+manager = logicManager()
+today = date(2026, 6, 1)
+
+# Setting discount using plural form
+manager.set_category_discount("ducks", 50.0)
+
+# Product uses singular form instead
+product = {
+    "id": "P1",
+    "category": "duck", 
+    "expiry_date": "2026-06-03",
+    "current_price": 20.0,
+    "quantity_in_stock": 10
+}
+
+ai_result = {
+    "status": "ok",
+    "risk_level": "medium",
+    "recommended_discount_percent": 20.0,
+    "predicted_unsold_quantity": 4.0,
+    "predicted_unsold_ratio": 0.4
+}
+
+result = manager.evaluate(product, ai_result, today)
+print(f"Category: {product['category']} | Final Discount Applied: {result['discount_percent']}%")
+# Output will be: 50.0% (Successfully matched "duck" to "ducks")
+
+
 class TestLogicManagerCategoryDiscount(unittest.TestCase):
 
     def setUp(self):
