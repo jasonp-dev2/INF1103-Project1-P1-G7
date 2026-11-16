@@ -1,98 +1,126 @@
 """
-data_manager.py - Data layer (saving and loading records).
+data_manager class
+ - MongoDB storage for assessments.
+ -Create, save, load and query assessments.
+
 """
-import json
-import os
+
 from datetime import date
-from pathlib import Path
 
-DEFAULT_DATA_FILE = "data/products.json"
+from pymongo.errors import PyMongoError
 
-"""Return the path of the data file as a Path object"""
-def get_data_file() -> Path:
-    #to check for environemntal variable DATA_FILE, else use default path
-    #DATA_FILE is used for testing purposes, avoiding overwrite of data file
-    file_path_string = os.environ.get("DATA_FILE", DEFAULT_DATA_FILE)
-    return Path(file_path_string)
+from RecordRepository import MongoRecordRepository, DataAccessError
+from AssessmentRecord import AssessmentRecord
+from Product import Product
+from AIAssessment import AIAssessment
+from Decision import Decision
 
+class DataManager:
 
-# Status of the data file on disk
-FILE_OK = "ok"
-FILE_MISSING = "missing"
-FILE_CORRUPT = "corrupt"
+    def __init__(
+        self,
+        repository: MongoRecordRepository | None = None,
+    ) -> None:
+        if repository is None:
+            try:
+                repository = MongoRecordRepository()
+            except PyMongoError:
+                raise DataAccessError(
+                    "Invalid MongoDB connection settings."
+                ) from None
 
+        self._repository: MongoRecordRepository = repository
 
-def get_file_status() -> str:
-    """Check the data file: FILE_OK, FILE_MISSING or FILE_CORRUPT."""
-    path = get_data_file()
+    @property
+    def repository(self) -> MongoRecordRepository:
+        return self._repository
 
-    if not path.exists():
-        return FILE_MISSING
+    def get_db_status(self) -> str:
+        return self._repository.get_status()
 
-    try:
-        with path.open("r", encoding="utf-8") as file:
-            data = json.load(file)
-    except (json.JSONDecodeError, OSError):
-        return FILE_CORRUPT
+    def load_records(self) -> list[AssessmentRecord]:
+        return self._repository.load_all()
 
-    # The file must hold a list of records
-    if type(data) is not list:
-        return FILE_CORRUPT
-    return FILE_OK
+    def save_records(self, records: list[AssessmentRecord]) -> bool:
+        """Save supplied records without deleting omitted MongoDB documents."""
+        return self._repository.save_all(records)
 
+    def get_record(self, record_id: str) -> AssessmentRecord | None:
+        """Read from MongoDB; None means the record does not exist."""
+        return self._repository.get_record(record_id)
 
-def load_records() -> list:
-    """Load all saved records as a list.
-    A missing file gives []. A corrupt file is renamed to <name>.corrupt
-    (so nothing is lost) and also gives []."""
-    path = get_data_file()
-    status = get_file_status()
+    def insert_record(self, record: AssessmentRecord) -> bool:
+        """Insert a new record without replacing an existing ID."""
+        return self._repository.insert_record(record)
 
-    if status == FILE_MISSING:
-        return []
+    def update_record(self, record: AssessmentRecord) -> bool:
+        """Replace an existing saved record."""
+        return self._repository.update_record(record)
 
-    if status == FILE_CORRUPT:
-        try:
-            path.replace(path.with_name(path.name + ".corrupt"))
-        except OSError:
-            pass
-        return []
+    def delete_record(self, record_id: str) -> bool:
+        return self._repository.delete_record(record_id)
 
-    with path.open("r", encoding="utf-8") as file:
-        return json.load(file)
+    def close(self) -> None:
+        self._repository.close()
 
+    def create_record(
+        self,
+        records: list[AssessmentRecord],
+        product: Product,
+        ai_result: AIAssessment,
+        decision: Decision,
+    ) -> AssessmentRecord:
+        """Create an assessment object; this does not save it to MongoDB."""
+        next_number = self._next_record_number(records)
+        record_id = f"PRD-{next_number:04d}"
 
-#Save all records directly to the data file.
-def save_records(records: list) -> bool: 
-    path = get_data_file()
-    
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
+        return AssessmentRecord(
+            record_id=record_id,
+            product=product,
+            ai_assessment=ai_result,
+            decision=decision,
+        )
 
-        with path.open("w", encoding="utf-8") as file:
-            json.dump(records, file, indent=2)
-        return True
-    except OSError:
-        return False
+    @staticmethod
+    def _next_record_number(records: list[AssessmentRecord]) -> int:
+        highest_number = len(records)
 
-# Create a record using product from io_manager.py, ai_result from ai_manager.py, and decision from decision_manager.py
-def create_record(records: list, product: dict, ai_result: dict, decision: dict) -> dict:
-    new_id = f"PRD-{len(records) + 1:04d}" #id example PRD-0001
-    
-    return {
-        "record_id": new_id,
-        "product": product, 
-        "ai_assessment": ai_result,
-        "decision": decision,
-    }
+        for record in records:
+            record_id = record.record_id
 
-#filtering for products expiry
-def filter_near_expiry(records: list, days: int, today: date) -> list:
-    #Return records whose product expires within 'days' from today.
-    matches = []
-    for record in records:
-        expiry = date.fromisoformat(record["product"]["expiry_date"])
-        days_left = (expiry - today).days
-        if 0 <= days_left <= days:
-            matches.append(record)
-    return matches
+            if record_id.startswith("PRD-") and record_id[4:].isdigit():
+                number = int(record_id[4:])
+                highest_number = max(highest_number, number)
+
+        return highest_number + 1
+
+    @staticmethod
+    def find_by_id(
+        records: list[AssessmentRecord],
+        record_id: str,
+    ) -> AssessmentRecord | None:
+        """Find a record in the supplied session list, without querying MongoDB."""
+        normalized_id = record_id.strip().upper()
+
+        for record in records:
+            if record.record_id.upper() == normalized_id:
+                return record
+
+        return None
+
+    @staticmethod
+    def filter_near_expiry(
+        records: list[AssessmentRecord],
+        days: int,
+        today: date,
+    ) -> list[AssessmentRecord]:
+        """Return records expiring between today and the inclusive threshold."""
+        matches = []
+
+        for record in records:
+            days_left = record.product.days_until_expiry(today)
+
+            if 0 <= days_left <= days:
+                matches.append(record)
+
+        return matches
