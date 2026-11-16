@@ -1,0 +1,378 @@
+[
+    {
+        "record_id": "PRD-0001",
+        "product": {
+            "product_name": "Milk",
+            "product_category": "Dairy & Eggs",
+            "product_quantity": 10,
+            "product_expiry_date": "2026-10-10",
+            "product_current_price": 5.0
+        },
+        "ai_assessment": {
+            "status": "failed",
+            "error": "No API key set (or the anthropic package is not installed)."
+        },
+        "decision": {
+            "outcome": "NOT_NEAR_EXPIRY",
+            "rule": "R2",
+            "reason": "12 days left - not near expiry, no discount needed.",
+            "days_to_expiry": 12,
+            "discount_percent": 0,
+            "final_price": 5.0,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0002",
+        "product": {
+            "product_name": "milk",
+            "category": "Dairy & Eggs",
+            "quantity_in_stock": 11,
+            "expiry_date": "2026-09-30",
+            "current_price": 1.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "failed",
+            "error": "No API key set (or the anthropic package is not installed)."
+        },
+        "decision": {
+            "outcome": "MANUAL_REVIEW",
+            "rule": "R3",
+            "reason": "The AI assessment was unavailable, so staff must review this item.",
+            "days_to_expiry": 2,
+            "discount_percent": 0,
+            "final_price": 1.0,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0003",
+        "product": {
+            "product_name": "Milk",
+            "category": "Dairy & Eggs",
+            "quantity_in_stock": 10,
+            "expiry_date": "2026-09-30",
+            "current_price": 4.5,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "high",
+            "recommended_discount_percent": 30,
+            "predicted_unsold_quantity": 3
+        },
+        "decision": {
+            "outcome": "DISCOUNT_RECOMMENDED",
+            "rule": "R6",
+            "reason": "Near expiry with high risk - a discount is recommended.",
+            "days_to_expiry": 2,
+            "discount_percent": 30,
+            "final_price": 3.15,
+            "waste_cost_if_unsold": 13.5,
+            "needs_staff_approval": true
+        },
+        "staff_approved": true
+    },
+    {
+        "record_id": "PRD-0004",
+        "product": {
+            "product_name": "Cookie",
+            "category": "Pantry & Dry Goods",
+            "quantity_in_stock": 100,
+            "expiry_date": "2026-10-10",
+            "current_price": 1.2,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "medium",
+            "recommended_discount_percent": 12,
+            "predicted_unsold_quantity": 20
+        },
+        "decision": {
+            "outcome": "NOT_NEAR_EXPIRY",
+            "rule": "R2",
+            "reason": "12 days left - not near expiry, no discount needed.",
+            "days_to_expiry": 12,
+            "discount_percent": 0,
+            "final_price": 1.2,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0005",
+        "product": {
+            "product_name": "Chicken Feet",
+            "category": "Frozen Food",
+            "quantity_in_stock": 10,
+            "expiry_date": "2026-10-01",
+            "current_price": 6.7,
+            "member_discount_active": true
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "medium",
+            "recommended_discount_percent": 20,
+            "predicted_unsold_quantity": 3
+        },
+        "decision": {
+            "outcome": "NO_STACKING",
+            "rule": "R4",
+            "reason": "Already discounted, so no extra discount is added on top.",
+            "days_to_expiry": 3,
+            "discount_percent": 0,
+            "final_price": 6.7,
+            "waste_cost_if_unsold": 20.1,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0006",
+        "product": {
+            "product_name": "Fish Burger",
+            "category": "Ready-to-Eat Meals",
+            "quantity_in_stock": 25,
+            "expiry_date": "2026-09-29",
+            "current_price": 3.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "high",
+            "recommended_discount_percent": 40,
+            "predicted_unsold_quantity": 10
+        },
+        "decision": {
+            "outcome": "DISCOUNT_RECOMMENDED",
+            "rule": "R6",
+            "reason": "Near expiry with high risk - a discount is recommended.",
+            "days_to_expiry": 1,
+            "discount_percent": 40,
+            "final_price": 1.8,
+            "waste_cost_if_unsold": 30.0,
+            "needs_staff_approval": true
+        },
+        "staff_approved": true
+    },
+    {
+        "record_id": "PRD-0007",
+        "product": {
+            "product_name": "Candy",
+            "category": "Snacks & Confectionery",
+            "quantity_in_stock": 5,
+            "expiry_date": "2026-10-04",
+            "current_price": 1.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "low",
+            "recommended_discount_percent": 0,
+            "predicted_unsold_quantity": 0
+        },
+        "decision": {
+            "outcome": "MONITOR",
+            "rule": "R7",
+            "reason": "Near expiry but low risk of waste - keep monitoring.",
+            "days_to_expiry": 5,
+            "discount_percent": 0,
+            "final_price": 1.0,
+            "waste_cost_if_unsold": 0.0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0008",
+        "product": {
+            "product_name": "Garden Salad",
+            "category": "Fruits & Vegetables",
+            "quantity_in_stock": 100,
+            "expiry_date": "2026-10-09",
+            "current_price": 1.7,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "medium",
+            "recommended_discount_percent": 15,
+            "predicted_unsold_quantity": 20
+        },
+        "decision": {
+            "outcome": "NOT_NEAR_EXPIRY",
+            "rule": "R2",
+            "reason": "10 days left - not near expiry, no discount needed.",
+            "days_to_expiry": 10,
+            "discount_percent": 0,
+            "final_price": 1.7,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0009",
+        "product": {
+            "product_name": "Pineapple Tart",
+            "category": "Snacks & Confectionery",
+            "quantity_in_stock": 500,
+            "expiry_date": "2026-10-02",
+            "current_price": 5.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "high",
+            "recommended_discount_percent": 35,
+            "predicted_unsold_quantity": 300
+        },
+        "decision": {
+            "outcome": "URGENT_DISCOUNT",
+            "rule": "R5",
+            "reason": "3 day(s) left, high risk and about 300 unit(s) likely unsold.",
+            "days_to_expiry": 3,
+            "discount_percent": 35,
+            "final_price": 3.25,
+            "waste_cost_if_unsold": 1500.0,
+            "needs_staff_approval": true
+        },
+        "staff_approved": true
+    },
+    {
+        "record_id": "PRD-0010",
+        "product": {
+            "product_name": "Bread",
+            "category": "Pantry & Dry Goods",
+            "quantity_in_stock": 50,
+            "expiry_date": "2026-08-08",
+            "current_price": 1.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "high",
+            "recommended_discount_percent": 100,
+            "predicted_unsold_quantity": 50
+        },
+        "decision": {
+            "outcome": "EXPIRED",
+            "rule": "R1",
+            "reason": "The product has passed its expiry date and must not be sold.",
+            "days_to_expiry": -52,
+            "discount_percent": 0,
+            "final_price": 1.0,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0011",
+        "product": {
+            "product_name": "2",
+            "category": "Bakery",
+            "quantity_in_stock": 2,
+            "expiry_date": "2026-10-10",
+            "current_price": 9.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "low",
+            "recommended_discount_percent": 0,
+            "predicted_unsold_quantity": 0
+        },
+        "decision": {
+            "outcome": "NOT_NEAR_EXPIRY",
+            "rule": "R2",
+            "reason": "11 days left - not near expiry, no discount needed.",
+            "days_to_expiry": 11,
+            "discount_percent": 0,
+            "final_price": 9.0,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0012",
+        "product": {
+            "product_name": "Baby Powder",
+            "category": "Bakery",
+            "quantity_in_stock": 1,
+            "expiry_date": "2026-10-10",
+            "current_price": 20.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "low",
+            "recommended_discount_percent": 0,
+            "predicted_unsold_quantity": 0
+        },
+        "decision": {
+            "outcome": "NOT_NEAR_EXPIRY",
+            "rule": "R2",
+            "reason": "11 days left - not near expiry, no discount needed.",
+            "days_to_expiry": 11,
+            "discount_percent": 0,
+            "final_price": 20.0,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0013",
+        "product": {
+            "product_name": "LOLL",
+            "category": "Dairy & Eggs",
+            "quantity_in_stock": 202,
+            "expiry_date": "2026-10-10",
+            "current_price": 2.0,
+            "member_discount_active": false
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "high",
+            "recommended_discount_percent": 25,
+            "predicted_unsold_quantity": 74
+        },
+        "decision": {
+            "outcome": "NOT_NEAR_EXPIRY",
+            "rule": "R2",
+            "reason": "11 days left - not near expiry, no discount needed.",
+            "days_to_expiry": 11,
+            "discount_percent": 0,
+            "final_price": 2.0,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    },
+    {
+        "record_id": "PRD-0014",
+        "product": {
+            "product_name": "Jingle Bells",
+            "category": "Meat & Seafood",
+            "quantity_in_stock": 10,
+            "expiry_date": "2026-10-10",
+            "current_price": 1.0,
+            "member_discount_active": true
+        },
+        "ai_assessment": {
+            "status": "ok",
+            "risk_level": "low",
+            "recommended_discount_percent": 10,
+            "predicted_unsold_quantity": 1
+        },
+        "decision": {
+            "outcome": "NOT_NEAR_EXPIRY",
+            "rule": "R2",
+            "reason": "11 days left - not near expiry, no discount needed.",
+            "days_to_expiry": 11,
+            "discount_percent": 0,
+            "final_price": 1.0,
+            "waste_cost_if_unsold": 0,
+            "needs_staff_approval": false
+        }
+    }
+]

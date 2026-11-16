@@ -1,3 +1,5 @@
+from Lib import json
+
 from classes.productCatergory import productCategory
 from datetime import datetime , date
 
@@ -102,4 +104,35 @@ class inputHandler:
 
         new_item = productCategory(product_name, category_number, quantity, expiry_date, price)
         return new_item
+    
+    @staticmethod
+    def update_product_stock():
+        search_id = inputHandler.collect_record_id()#asks user for record ID
+        with open("products.json", "r") as file:
+            products_data = json.load(file)
+        found_product = None
+        for item in products_data:
+            if item["record_id"] == search_id:#seach through the products.json file for the record ID
+                found_product = item
+                break
+        if found_product is None:
+            print(f"No product found with ID {search_id}.")#is not found, print message and return
+            return
+        product = found_product["product"]
+        product_name = product["product_name"]
+        print(f"Current stock for {product_name}: {product['product_quantity']}")
+
+        new_stock = input("Please enter the new stock quantity:")
+        while inputHandler.valid_stock(new_stock) == "no":
+            print("Invalid quantity. Please try again.")
+            new_stock = input("Please enter the new stock quantity:")
+
+        new_stock = int(new_stock)
+        product["product_quantity"] = new_stock#update the stock value in the found product dictionary
+        with open("products.json", "w") as file:
+            json.dump(products_data, file, indent=4)#write the updated products_data back to the products.json file
+        
+        print(f"Stock for {product_name} updated to {new_stock}.")
+        return search_id
+    
 
