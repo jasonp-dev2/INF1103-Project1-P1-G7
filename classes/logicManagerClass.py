@@ -31,19 +31,36 @@ class logicManager():
     def __init__(self):
         self._category_discounts = {}
 
+    def _normalize_category(self, category: str) -> str:
+        if not category:
+            return ""
+        cat = category.lower().strip()
+
+        #Handles common plurals/typos
+        if cat.endswith("ies") and len(cat) > 3:
+            return cat[:-3] + "y" # e.g: "berries" -> "berry"
+        if cat.endswith("es") and len(cat) > 3:
+            return cat[:-2] # e.g:
+        if cat.endswith("s") and len(cat) > 3:
+            return cat[:-1] # e.g: "meats" -> "meat"
+
+        return cat
+
     #Setting the category discount
     def set_category_discount(self, category, discount):
         if discount < 0 or discount > MAX_DISCOUNT_PERCENT:
             raise ValueError("Invalid discount")
 
-        self._category_discounts[category] = discount
+        normalized_cat = self._normalize_category(category)
+        self._category_discounts[normalized_cat] = discount
 
     #Retrieving the category discount
     def get_final_discount(self, product: dict, recommended_discount: float) -> float:
         category = product.get("category")
+        normalized_cat = self._normalize_category(category)
 
-        if category in self._category_discounts:
-            return self._category_discounts[category]
+        if normalized_cat in self._category_discounts:
+            return self._category_discounts[normalized_cat]
 
         return recommended_discount
 
