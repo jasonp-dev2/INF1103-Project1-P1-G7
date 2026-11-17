@@ -3,11 +3,20 @@ from datetime import date, datetime
 NEAR_EXPIRY_DAYS = 7          
 URGENT_DAYS = 3               
 URGENT_UNSOLD_RATIO = 0.5     
-URGENT_MIN_DISCOUNT = 30      
+URGENT_MIN_DISCOUNT = 30
+
+# Default max discount, user can set with set_max_discount() 
 MAX_DISCOUNT_PERCENT = 50     
+
+# The max discount itself can never be set above this.
+ABSOLUTE_MAX_DISCOUNT = 100
 
 # The AI result's "status" value when the AI call worked.
 STATUS_OK = "ok"
+
+# Unknown products will be under "Others"
+OTHERS_CATEGORY = "others"
+DEFAULT_OTHERS_DISCOUNT = 20
 
 # The possible outcomes of a decision
 OUTCOME_EXPIRED = "EXPIRED"
@@ -29,38 +38,110 @@ OUTCOMES = (
 class logicManager():
 
     def __init__(self):
-        self._category_discounts = {}
+        self._max_discount = MAX_DISCOUNT_PERCENT
+        self._known_categories = set()
+        # "others" always has a default discount so unknown categories are covered.
+        self._category_discounts = {OTHERS_CATEGORY: DEFAULT_OTHERS_DISCOUNT}
 
     def _normalize_category(self, category: str) -> str:
-        if not category:
+        if not category or not isinstance(category, str):
             return ""
-        cat = category.lower().strip()
+        
+        cat = " ".join(category.lower().split())
+
+        if cat in ("other", "others"):
+            return OTHERS_CATEGORY
 
         #Handles common plurals/typos
         if cat.endswith("ies") and len(cat) > 3:
             return cat[:-3] + "y" # e.g: "berries" -> "berry"
-        if cat.endswith("es") and len(cat) > 3:
-            return cat[:-2] # e.g:
-        if cat.endswith("s") and len(cat) > 3:
+        if cat.endswith(("sses", "shes", "ches", "xes", "oes")) and len(cat) > 3:
+            return cat[:-2] # e.g: "tomatoes" -> "tomato"
+        if cat.endswith("s") and not cat.endswith("ss") and len(cat) > 3:
             return cat[:-1] # e.g: "meats" -> "meat"
 
         return cat
 
+    # Call this after loading products (json/mongodb) and after adding a product,
+    # so the manager knows which categories really exist.
+    def load_categories(self, products: list) -> None:
+        self._known_categories = set()
+        for product in products:
+            cat = self._normalize_category(product.get("category"))
+            if cat:
+                self._known_categories.add(cat)
+
+    def get_known_categories(self) -> list:
+        return sorted(self._known_categories)
+
+    # Which bucket a category belongs to: itself if it exists, otherwise "others"
+    def resolve_category(self, category) -> str:
+        cat = self._normalize_category(category)
+
+        # If categories have not been loaded yet, do not push everything into "others"
+        if not self._known_categories:
+            return cat or OTHERS_CATEGORY
+
+        if cat in self._known_categories:
+            return cat
+        return OTHERS_CATEGORY
+
+    # ---------------------------------------------------------------------------
+    # User-configurable discount settings
+    # ---------------------------------------------------------------------------
+
+    def set_max_discount(self, max_discount: float) -> None:
+        if max_discount < 0 or max_discount > ABSOLUTE_MAX_DISCOUNT:
+            raise ValueError(f"Max discount must be between 0 and {ABSOLUTE_MAX_DISCOUNT}")
+        self._max_discount = max_discount
+
+    def get_max_discount(self) -> float:
+        return self._max_discount
+
     #Setting the category discount
-    def set_category_discount(self, category, discount):
-        if discount < 0 or discount > MAX_DISCOUNT_PERCENT:
+    def set_category_discount(self, category, discount: float) -> str:
+        if not isinstance(discount, (int, float)) or isinstance(discount, bool):
+            raise ValueError("Discount must be a number")
+    
+        if discount < 0 or discount > ABSOLUTE_MAX_DISCOUNT:
             raise ValueError("Invalid discount")
 
-        normalized_cat = self._normalize_category(category)
-        self._category_discounts[normalized_cat] = discount
+    # Buckeet meaning its just to show the user where its stored under (typo errors)
+        bucket = self.resolve_category(category)
+        self._category_discounts[bucket] = discount
+        return bucket
 
-    #Retrieving the category discount
+    # Go back to AI's discount for that category ("others" goes back to its default)
+    def remove_category_discount(self, category) -> None:
+        bucket = self.resolve_category(category)
+        if bucket == OTHERS_CATEGORY:
+            self._category_discounts[OTHERS_CATEGORY] = DEFAULT_OTHERS_DISCOUNT
+        else:
+            self._category_discounts.pop(bucket, None)
+
+    def get_category_discounts(self) -> dict:
+        return dict(self._category_discounts)
+
+    # For saving/loading the user's settings (json/mongodb)
+    # (Discounts still work after restarting program)
+    def get_settings(self) -> dict:
+        return {
+            "max_discount": self._max_discount,
+            "category_discounts": dict(self._category_discounts),
+        }
+
+    # Call load_categories() first, then this.
+    def load_settings(self, settings: dict) -> None:
+        self.set_max_discount(settings.get("max_discount", MAX_DISCOUNT_PERCENT))
+        for category, discount in settings.get("category_discounts", {}).items():
+            self.set_category_discount(category, discount)
+
+    # Category discount overrides the AI's discount. No category discount -> keep AI's.
     def get_final_discount(self, product: dict, recommended_discount: float) -> float:
-        category = product.get("category")
-        normalized_cat = self._normalize_category(category)
+        bucket = self.resolve_category(product.get("category"))
 
-        if normalized_cat in self._category_discounts:
-            return self._category_discounts[normalized_cat]
+        if bucket in self._category_discounts:
+            return self._category_discounts[bucket]
 
         return recommended_discount
 
@@ -151,32 +232,58 @@ class logicManager():
         unsold_ratio = self.calculate_unsold_ratio(predicted_unsold, quantity)
         waste_cost = self.calculate_waste_cost(predicted_unsold, price)
 
-        # Rule4: Multi-condition rule using AI output. (Urgent)
+        # Check category override.
+        bucket = self.resolve_category(product.get("category"))
+
+        if bucket in self._category_discounts:
+
+            # User category discount overrides AI completely.
+            percent = self._category_discounts[bucket]
+
+            # Apply global maximum discount.
+            percent = self.apply_discount_cap(
+            percent, self._max_discount
+            )
+
+            # A 0% category discount means no discount.
+            if percent == 0:
+                return self.make_decision(
+                    OUTCOME_MONITOR, "R4",
+                    f"User-configured discount for {bucket} is 0%. "
+                    "No discount will be applied.",
+                    days_left, 0, price, waste_cost
+                )
+            final = self.make_decision(
+                OUTCOME_URGENT_DISCOUNT if days_left <= URGENT_DAYS else OUTCOME_DISCOUNT, "R4",
+                f"User-configured {bucket} discount overrides the AI recommendation.",
+                days_left, percent, price, waste_cost
+            )
+            return final
+
+        # Rule5: Multi-condition rule using AI output. (Urgent)
         #      Few days left AND high risk AND alot expected unsold.
         if (days_left <= URGENT_DAYS and risk == "high" and unsold_ratio >= URGENT_UNSOLD_RATIO):
             percent = max(ai_percent, URGENT_MIN_DISCOUNT)
-            percent = self.get_final_discount(product, percent)
-            percent = self.apply_discount_cap(percent, MAX_DISCOUNT_PERCENT)
+            percent = self.apply_discount_cap(percent, self._max_discount)
             final = self.make_decision(
-                OUTCOME_URGENT_DISCOUNT, "R4",
+                OUTCOME_URGENT_DISCOUNT, "R5",
                 f"{days_left} day(s) left, high risk and about "
                 f"{predicted_unsold:.0f} unit(s) likely unsold.",
                 days_left, percent, price, waste_cost)
             return final
 
-        # Rule5: Normal discount: AI suggests a discount and risk is not low.
+        # Rule6: Normal discount: AI suggests a discount and risk is not low.
         if ai_percent > 0 and risk != "low":
-            percent = self.get_final_discount(product, ai_percent)
-            percent = self.apply_discount_cap(percent, MAX_DISCOUNT_PERCENT)
+            percent = self.apply_discount_cap(ai_percent, self._max_discount)
             final = self.make_decision(
-                OUTCOME_DISCOUNT, "R5",
+                OUTCOME_DISCOUNT, "R6",
                 f"Near expiry with {risk} risk - a discount is recommended.",
                 days_left, percent, price, waste_cost)
             return final
 
-        # Rule6: Keep an eye on it, no discount yet.
+        # Rule7: Keep an eye on it, no discount yet.
         final = self.make_decision(
-            OUTCOME_MONITOR, "R6",
+            OUTCOME_MONITOR, "R7",
             "Near expiry but low risk of waste - keep monitoring.",
             days_left, 0, price, waste_cost)
         return final
