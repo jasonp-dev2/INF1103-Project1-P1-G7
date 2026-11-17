@@ -21,7 +21,7 @@ class AIManager:
         "predicted_unsold_quantity",
     ]
 
-    def __init__(self, ai_client: AIService = None):
+    def __init__(self, ai_client: AIService | None = None) -> None:
         # Dependency Injection with Polymorphism
         self.ai_client = ai_client or GeminiClient()
 
@@ -56,7 +56,7 @@ Consider:
 Return only a JSON object with exactly these fields:
 {{
   "risk_level": "low" | "medium" | "high",
-  "recommended_discount_percent": integer from 0 to 90,
+  "recommended_discount_percent": number from 0 to 100,
   "predicted_unsold_quantity": integer from 0 to {product["quantity_in_stock"]}
 }}
 

@@ -13,7 +13,7 @@ class AIService(ABC):
     """Abstract Base Class (Interface) for AI service clients"""
 
     @abstractmethod
-    def create_client(self):
+    def create_client(self) -> object:
         pass
 
     @abstractmethod

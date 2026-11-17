@@ -28,15 +28,15 @@ class GeminiClient(AIService):
     # Model not found / not available to this key: skip straight to next model
     SKIP_MODEL_CODES = {404}
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: str | None = None) -> None:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
-        self._client = None
+        self._client: genai.Client | None = None
 
     # ---------------------------------------------------------------------------
     # Connect to Gemini
     # ---------------------------------------------------------------------------
 
-    def create_client(self):
+    def create_client(self) -> genai.Client:
         if not self.api_key:
             raise ValueError("GEMINI_API_KEY is missing from .env")
 
