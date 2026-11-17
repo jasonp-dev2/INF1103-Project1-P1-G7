@@ -1,12 +1,14 @@
 """
-Tests for logic_manager.py.
+Tests for the logicManager used by main.py.
 These tests use hardcoded sample AI responses, so they never call the
 real AI and need no API key or internet.
 Run them with:  python -m pytest
 """
 from datetime import date, timedelta
 
-import logic_manager
+from classes.logicManagerClass import logicManager
+
+logic_manager = logicManager()
 
 TODAY = date(2026, 10, 10)
 

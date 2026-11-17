@@ -155,7 +155,7 @@ class logicManager():
         #      Few days left AND high risk AND alot expected unsold.
         if (days_left <= URGENT_DAYS and risk == "high" and unsold_ratio >= URGENT_UNSOLD_RATIO):
             percent = max(ai_percent, URGENT_MIN_DISCOUNT)
-            percent = self.get_final_discount(product, percent)
+            percent = max(URGENT_MIN_DISCOUNT, self.get_final_discount(product, percent))
             percent = self.apply_discount_cap(percent, MAX_DISCOUNT_PERCENT)
             final = self.make_decision(
                 OUTCOME_URGENT_DISCOUNT, "R4",

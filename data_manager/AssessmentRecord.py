@@ -6,9 +6,9 @@ Binds a Product, AIAssessment and Decision under a record ID.
 from __future__ import annotations
 
 from typing import Any
-from Product import Product
-from AIAssessment import AIAssessment
-from Decision import Decision
+from classes.Product import Product
+from classes.AIAssessment import AIAssessment
+from classes.Decision import Decision
 
 
 class AssessmentRecord:

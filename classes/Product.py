@@ -19,6 +19,20 @@ class Product:
             "current_price": round(self._price, 2),
         }
 
+    @classmethod
+    def from_dict(cls, data: dict) -> "Product":
+        expiry = datetime.strptime(data["expiry_date"], "%Y-%m-%d").date()
+        return cls(
+            data["product_name"],
+            data["category"],
+            data["quantity_in_stock"],
+            expiry,
+            data["current_price"],
+        )
+
+    def days_until_expiry(self, today: date) -> int:
+        return (self._expiry - today).days
+
     def get_discount_cap() -> float:
         return
 

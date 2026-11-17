@@ -9,17 +9,19 @@ from datetime import date
 
 from pymongo.errors import PyMongoError
 
-from RecordRepository import MongoRecordRepository, DataAccessError
-from AssessmentRecord import AssessmentRecord
-from Product import Product
-from AIAssessment import AIAssessment
-from Decision import Decision
+from .DataAccessError import DataAccessError
+from .MongoRecordRepository import MongoRecordRepository
+from .RecordRepository import RecordRepository
+from .AssessmentRecord import AssessmentRecord
+from classes.Product import Product
+from classes.AIAssessment import AIAssessment
+from classes.Decision import Decision
 
 class DataManager:
 
     def __init__(
         self,
-        repository: MongoRecordRepository | None = None,
+        repository: RecordRepository | None = None,
     ) -> None:
         if repository is None:
             try:
@@ -29,10 +31,10 @@ class DataManager:
                     "Invalid MongoDB connection settings."
                 ) from None
 
-        self._repository: MongoRecordRepository = repository
+        self._repository: RecordRepository = repository
 
     @property
-    def repository(self) -> MongoRecordRepository:
+    def repository(self) -> RecordRepository:
         return self._repository
 
     def get_db_status(self) -> str:

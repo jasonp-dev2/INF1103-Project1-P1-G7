@@ -9,12 +9,16 @@ from datetime import date
 
 from dotenv import load_dotenv
 
-import data_manager
-import logic_manager
 from AIManager.AIManager import AIManager
+from classes.AIAssessment import AIAssessment
+from classes.Decision import Decision
 from classes.IO_Manager import IO_Manager
+from classes.logicManagerClass import logicManager
+from data_manager.DataAccessError import DataAccessError
+from data_manager.data_manager import DataManager
 
 io_manager = IO_Manager()
+logic_manager = logicManager()
 
 def setup_logging() -> None:
     """Send diagnostic messages (e.g. AI failures) to logs/app.log."""
@@ -26,135 +30,125 @@ def setup_logging() -> None:
     )
 
 
-def assess_new_product(records: list, ai_manager: AIManager) -> None:
+def assess_new_product(data_manager: DataManager, ai_manager: AIManager) -> None:
     """Menu option 1: the full pipeline for one product."""
     today = date.today()
 
     # 1. io_manager: get validated product details from the user
-    product = io_manager.collect_product_info().to_dict()
+    product = io_manager.collect_product_info()
+    product_data = product.to_dict()
 
     # 2. ai_manager: ask the AI for an assessment
     io_manager.show_message("Waiting for the AI response...")
-    ai_result = ai_manager.assess_product(product, today)
+    ai_result = ai_manager.assess_product(product_data, today)
     if ai_result["status"] != ai_manager.STATUS_OK:
         io_manager.show_warning("AI assessment unavailable: " + ai_result["error"]
                                 + " The item is sent to manual review.")
 
     # 3. logic_manager: apply the business rules
-    decision = logic_manager.evaluate(product, ai_result, today)
+    decision = logic_manager.evaluate(product_data, ai_result, today)
 
-    # 4. data_manager: combine everything into one record
-    record = data_manager.create_record(records, product, ai_result, decision)
-
-    # 5. io_manager: staff must approve any recommended discount
-    if decision["needs_staff_approval"]:
-        record["staff_approved"] = io_manager.collect_staff_approval(decision)
-
-    # 6. data_manager: save
-    records.append(record)
-    if data_manager.save_records(records):
-        io_manager.show_message("Saved as " + record["record_id"])
-    else:
-        io_manager.show_warning("Could not save to the data file. "
-                                "The record is kept for this session only.")
-
-    # 7. io_manager: show the result
-    io_manager.display_result(record)
-
-
-def show_all_products(records: list) -> None:
-    """Menu option 2: show every saved record."""
-    io_manager.display_list(records)
-    io_manager.wait_for_enter()
-
-
-def show_near_expiry_products(records: list) -> None:
-    """Menu option 3: show records expiring within a number of days."""
-    days = io_manager.collect_days_threshold()
-    matches = data_manager.filter_near_expiry(records, days, date.today())
-    io_manager.display_list(matches)
-    io_manager.wait_for_enter()
-
-def view_saved_assessment(records: list) -> None:
-    """Menu option 4: display one saved assessment."""
-    if not records:
-        io_manager.show_message("No saved assessments found.")
-        return
-
-    record_id = io_manager.collect_record_id()
-
-    for record in records:
-        if record["record_id"].upper() == record_id:
-            io_manager.show_message(
-                "\nShowing the previously recorded assessment."
-            )
-            io_manager.display_result(record)
-            return
-
-    io_manager.show_message(
-        "No record found with ID: " + record_id
+    record = data_manager.create_record(
+        data_manager.load_records(),
+        product,
+        AIAssessment.from_dict(ai_result),
+        Decision.from_dict(decision),
     )
-def remove_product(records: list) -> None:
-    if not records:
-        io_manager.show_message("No saved assessments found.")
+
+    if decision["needs_staff_approval"]:
+        record.staff_approved = io_manager.collect_staff_approval(decision)
+
+    if data_manager.insert_record(record):
+        io_manager.show_message("Saved as " + record.record_id)
+    else:
+        io_manager.show_warning("Could not save the assessment to MongoDB.")
+
+    io_manager.display_result(record.to_dict())
+
+
+def show_all_products(data_manager: DataManager) -> None:
+    records = data_manager.load_records()
+    io_manager.display_list([record.to_dict() for record in records])
+    io_manager.wait_for_enter()
+
+
+def show_near_expiry_products(data_manager: DataManager) -> None:
+    days = io_manager.collect_days_threshold()
+    matches = data_manager.filter_near_expiry(data_manager.load_records(), days, date.today())
+    io_manager.display_list([record.to_dict() for record in matches])
+    io_manager.wait_for_enter()
+
+
+def view_saved_assessment(data_manager: DataManager) -> None:
+    record_id = io_manager.collect_record_id()
+    record = data_manager.get_record(record_id)
+    if record is None:
+        io_manager.show_message("No record found with ID: " + record_id)
         return
 
-    record_id = io_manager.collect_record_id().strip().upper()
+    io_manager.show_message("\nShowing the previously recorded assessment.")
+    io_manager.display_result(record.to_dict())
 
-    for index, record in enumerate(records):
-        if record["record_id"].upper() != record_id:
-            continue
 
-        if not io_manager.confirm_delete(record_id):
-            io_manager.show_message("Deletion cancelled.")
-            return
-
-        updated_records = records[:index] + records[index + 1:]
-        if data_manager.save_records(updated_records):
-            records.pop(index)
-            io_manager.show_message(f"Deleted record {record_id}.")
-        else:
-            io_manager.show_warning("Could not save the deletion.")
+def remove_product(data_manager: DataManager) -> None:
+    record_id = io_manager.collect_record_id()
+    if data_manager.get_record(record_id) is None:
+        io_manager.show_message(f"No record found with ID: {record_id}")
         return
 
-    io_manager.show_message(f"No record found with ID: {record_id}")
+    if not io_manager.confirm_delete(record_id):
+        io_manager.show_message("Deletion cancelled.")
+        return
+
+    if data_manager.delete_record(record_id):
+        io_manager.show_message(f"Deleted record {record_id}.")
+    else:
+        io_manager.show_warning("Could not save the deletion.")
+
 
 def run() -> None:
-    load_dotenv()      # reads the API key from the .env file
+    load_dotenv()
     setup_logging()
 
-    # Initialize the refactored OOP Inventory AI Manager
     ai_manager = AIManager()
-
-    # data_manager copes with a missing or damaged file; we just tell the user
-    if data_manager.get_file_status() == data_manager.FILE_CORRUPT:
-        io_manager.show_warning("The saved data file was damaged. It was backed up "
-                                "and a new file will be started.")
-    records = data_manager.load_records()
-
-    io_manager.show_message("Loaded " + str(len(records)) + " saved record(s).")
-    if not ai_manager.ai_client.is_configured():
-        io_manager.show_warning("No API key found. Products will go to manual review.")
-
-    # try/except: Ctrl+C (or closed input) ends the program cleanly
     try:
+        data_manager = DataManager()
+    except DataAccessError as error:
+        io_manager.show_warning(str(error))
+        return
+
+    try:
+        try:
+            records = data_manager.load_records()
+            io_manager.show_message(f"Loaded {len(records)} saved record(s).")
+        except DataAccessError as error:
+            io_manager.show_warning(str(error))
+
+        if not ai_manager.ai_client.is_configured():
+            io_manager.show_warning("No API key found. Products will go to manual review.")
+
         choice = io_manager.collect_menu_choices()
         while choice != "0":
-            if choice == "1":
-                assess_new_product(records, ai_manager)
-            elif choice == "2":
-                show_all_products(records)
-            elif choice == "3":
-                show_near_expiry_products(records)
-            elif choice == "4":
-                view_saved_assessment(records)
-            elif choice == "5":
-                remove_product(records)
-            else:
-                io_manager.show_message("Please enter 0, 1, 2, 3, 4 or 5.")
+            try:
+                if choice == "1":
+                    assess_new_product(data_manager, ai_manager)
+                elif choice == "2":
+                    show_all_products(data_manager)
+                elif choice == "3":
+                    show_near_expiry_products(data_manager)
+                elif choice == "4":
+                    view_saved_assessment(data_manager)
+                elif choice == "5":
+                    remove_product(data_manager)
+                else:
+                    io_manager.show_message("Please enter 0, 1, 2, 3, 4 or 5.")
+            except DataAccessError as error:
+                io_manager.show_warning(str(error))
             choice = io_manager.collect_menu_choices()
     except (KeyboardInterrupt, EOFError):
         io_manager.show_message("\nInput closed.")
+    finally:
+        data_manager.close()
     io_manager.show_message("Goodbye!")
 
 
