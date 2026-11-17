@@ -4,10 +4,12 @@ RecordRepository class and subclasses
 -JSON and MongoDB storage for assessment records.
 
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -15,6 +17,9 @@ from pymongo import MongoClient
 from pymongo.errors import PyMongoError
 
 from .AssessmentRecord import AssessmentRecord
+
+
+logger = logging.getLogger(__name__)
 
 
 class DataAccessError(Exception):
@@ -174,7 +179,11 @@ class MongoRecordRepository(RecordRepository):
             if not records:
                 self._collection().find_one({})
             return True
-        except (PyMongoError, ValueError, KeyError, TypeError):
+        except PyMongoError as error:
+            logger.warning("MongoDB save failed (%s).", type(error).__name__)
+            return False
+        except (ValueError, KeyError, TypeError) as error:
+            logger.warning("Could not prepare MongoDB records (%s).", type(error).__name__)
             return False
 
     def close(self) -> None:
