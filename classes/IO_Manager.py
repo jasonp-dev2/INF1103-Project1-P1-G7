@@ -4,6 +4,16 @@ from classes.InputValid import inputvalid
 
 DATE_FORMAT = "%Y-%m-%d"
 
+CATEGORIES = {
+    1: "Dairy & Eggs",
+    2: "Bakery",
+    3: "Meat & Seafood",
+    4: "Fruits & Vegetables",
+    5: "Frozen Food",
+    6: "Beverages",
+    7: "Other",
+}
+
 class IO_Manager:
     def __init__(self, today: date | None = None) -> None:
         self._fixed_date = today
@@ -34,6 +44,9 @@ class IO_Manager:
             print("Invalid product name. Please try again.")
             product_name = inputvalid.valid_product_name(input(name_prompt))
 
+        for number, name in CATEGORIES.items():
+            print(f"{number}. {name}")
+
         category_prompt = "Please enter product category number (1-7): "
         category_number = inputvalid.valid_category(input(category_prompt))
         while category_number == "no":
@@ -58,7 +71,9 @@ class IO_Manager:
             print("Invalid price. Please try again.")
             price = inputvalid.valid_price(input(price_prompt))
 
-        return Product(product_name, category_number, quantity, expiry_date, price)
+        return Product(
+            product_name, CATEGORIES[category_number], quantity, expiry_date, price
+        )
 
     def _today(self) -> date:
         return self._fixed_date if self._fixed_date is not None else date.today()
