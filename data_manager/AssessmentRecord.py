@@ -15,9 +15,6 @@ class AssessmentRecord:
         decision: dict, 
         staff_approved: bool | None = None,
         isDeleted: bool = False) -> None:
-        if staff_approved is not None and not isinstance(staff_approved, bool):
-            raise ValueError("staff_approved must be True, False, or None.")
-
         if not isinstance(record_id, str) or not record_id.strip():
             raise ValueError("record_id must be a nonempty string.")
         if not all(isinstance(value, dict) for value in (product, ai_assessment, decision)):
@@ -26,9 +23,17 @@ class AssessmentRecord:
         self._product = deepcopy(product)
         self._ai_assessment = deepcopy(ai_assessment)
         self._decision = deepcopy(decision)
-        self._staff_approved = staff_approved
+        self.set_staff_approved(staff_approved)
         self.set_deleted(isDeleted)
 
+
+    @property
+    def record_id(self) -> str:
+        return self._record_id
+
+    @property
+    def is_deleted(self) -> bool:
+        return self._is_deleted
 
     def set_deleted(self, value: bool) -> None:
         if not isinstance(value, bool):
@@ -46,18 +51,6 @@ class AssessmentRecord:
         if value is not None and not isinstance(value, bool):
             raise ValueError("staff_approved must be True, False, or None.")
         self._staff_approved = value
-
-    def approve_discount(self) -> None:
-        self._staff_approved = True
-
-    def reject_discount(self) -> None:
-        self._staff_approved = False
-
-    def is_already_discounted(self) -> bool:
-        return (
-            self._decision["discount_percent"] > 0
-            and self._staff_approved is True
-        )
 
     def to_dict(self) -> dict:
         data = {
