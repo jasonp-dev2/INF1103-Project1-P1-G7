@@ -15,16 +15,6 @@ class IO_Manager:
         return product_name
 
     @staticmethod
-    def valid_category(category_number: str) -> int | str:
-        try:
-            number = int(category_number)
-        except ValueError:
-            return "no"
-        if not 1 <= number <= 7:
-            return "no"
-        return number
-
-    @staticmethod
     def valid_stock(quantity: str) -> int | str:
         if not quantity.isdecimal():
             return "no"
