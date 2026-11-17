@@ -186,7 +186,7 @@ class OutputHandler:
 
         # Final decision from logic_manager
         print("Saved outcome         :", decision["outcome"])
-        print("Rule applied    :", decision["rule"])
+        print("Rule applied    :", decision.get("rule", "N/A"))
         print("Saved discount  :",
               str(decision["discount_percent"]) + "%",
               "-> proposed price $" + format(decision["final_price"], ".2f"))
