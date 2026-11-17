@@ -1,8 +1,4 @@
-"""
-data_manager class
- - saves assessment records locally using json, followed by sync with MongoDB
- - handles AssessmentRecord objects
-"""
+"""Save locally first, then synchronize assessment records with MongoDB."""
 from __future__ import annotations
 
 from datetime import date
@@ -19,7 +15,7 @@ from .RecordRepository import (
 class DataManager:
     """Coordinate local and cloud storage; run one application instance at a time."""
     def __init__(self, repository: RecordRepository | None = None,
-                 json_path: str | Path | None = None) -> None:
+        json_path: str | Path | None = None) -> None:
         default_file = Path(__file__).resolve().parent.parent / "data" / "records.json"
         self._json = JsonRecordRepository(
             json_path or os.environ.get("DATA_FILE", default_file),
@@ -41,17 +37,18 @@ class DataManager:
     def _active(records: list[AssessmentRecord]) -> list[AssessmentRecord]:
         return [record for record in records if not record.is_deleted]
 
-    def _sync_pending(self) -> bool:
+    def _sync_pending(self, snapshot: dict | None = None) -> bool:
         """Upload the pending snapshot, then clear its flag with a normal JSON write."""
         try:
-            snapshot = self._json.load_snapshot()
-            records = [AssessmentRecord.from_dict(item) for item in snapshot["records"]]
+            if snapshot is None:
+                snapshot = self._json.load_snapshot()
             if not snapshot["sync_pending"]:
                 return True
+            records = [AssessmentRecord.from_dict(item) for item in snapshot["records"]]
             if not self._repository.save_all(records):
                 raise DataAccessError("MongoDB save failed.")
             cloud = self._repository.load_all(include_deleted=True)
-            cloud_by_id = {record.to_dict()["record_id"]: record.to_dict() for record in cloud}
+            cloud_by_id = {record.record_id: record.to_dict() for record in cloud}
             for record in records:
                 data = record.to_dict()
                 if cloud_by_id.get(data["record_id"]) != data:
@@ -71,19 +68,20 @@ class DataManager:
         return self.save_records([])
 
     def load_records(self) -> list[AssessmentRecord]:
-        if self.sync_pending:
-            # Validate the local snapshot before attempting any cloud upload.
-            records = self._json.load_all(include_deleted=True)
+        # Read once for the pending decision and any offline fallback.
+        snapshot = self._json.load_snapshot() if self._json.path.exists() else None
+        if snapshot is not None and snapshot["sync_pending"]:
+            records = [AssessmentRecord.from_dict(item) for item in snapshot["records"]]
             self.loaded_from = "json"
-            if self._sync_pending():
+            if self._sync_pending(snapshot):
                 records = self._json.load_all(include_deleted=True)
             return self._active(records)
         try:
             records = self._repository.load_all(include_deleted=True)
         except DataAccessError:
-            if not self._json.path.exists():
+            if snapshot is None:
                 raise LocalDataMissingError("MongoDB unavailable and no local backup exists.") from None
-            records = self._json.load_all(include_deleted=True)
+            records = [AssessmentRecord.from_dict(item) for item in snapshot["records"]]
             self.loaded_from = "json"
             self.warning = "MongoDB unavailable. Loaded the local JSON backup."
             return self._active(records)
