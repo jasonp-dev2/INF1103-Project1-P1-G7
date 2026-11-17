@@ -11,12 +11,8 @@ from pymongo.errors import PyMongoError
 
 from RecordRepository import MongoRecordRepository, DataAccessError
 from AssessmentRecord import AssessmentRecord
-from Product import Product
-from AIAssessment import AIAssessment
-from Decision import Decision
 
 class DataManager:
-
     def __init__(
         self,
         repository: MongoRecordRepository | None = None,
@@ -66,11 +62,10 @@ class DataManager:
     def create_record(
         self,
         records: list[AssessmentRecord],
-        product: Product,
-        ai_result: AIAssessment,
-        decision: Decision,
+        product: dict,
+        ai_result: dict,
+        decision: dict,
     ) -> AssessmentRecord:
-        """Create an assessment object; this does not save it to MongoDB."""
         next_number = self._next_record_number(records)
         record_id = f"PRD-{next_number:04d}"
 
@@ -99,7 +94,6 @@ class DataManager:
         records: list[AssessmentRecord],
         record_id: str,
     ) -> AssessmentRecord | None:
-        """Find a record in the supplied session list, without querying MongoDB."""
         normalized_id = record_id.strip().upper()
 
         for record in records:
@@ -114,7 +108,6 @@ class DataManager:
         days: int,
         today: date,
     ) -> list[AssessmentRecord]:
-        """Return records expiring between today and the inclusive threshold."""
         matches = []
 
         for record in records:

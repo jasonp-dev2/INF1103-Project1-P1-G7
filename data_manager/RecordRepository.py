@@ -9,7 +9,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 import logging
 import os
-from pathlib import Path
 from typing import Any
 
 from pymongo import MongoClient
@@ -17,6 +16,12 @@ from pymongo.collection import Collection
 from pymongo.errors import PyMongoError
 
 from AssessmentRecord import AssessmentRecord
+
+DB_OK = "ok"
+DB_MISSING = "missing"
+DB_CORRUPT = "corrupt"
+DB_UNAVAILABLE = "unavailable"
+
 
 logger = logging.getLogger(__name__)
 
@@ -129,8 +134,8 @@ class MongoRecordRepository(RecordRepository):
         try:
             self.load_all()
         except DataAccessError:
-            return FILE_UNAVAILABLE
-        return FILE_OK
+            return DB_UNAVAILABLE
+        return DB_OK
 
     def load_all(self) -> list[AssessmentRecord]:
         try:
