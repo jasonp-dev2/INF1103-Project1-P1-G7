@@ -48,7 +48,7 @@ class logicManager():
 
     #Setting the category discount
     def set_category_discount(self, category, discount):
-        if discount < 0 or discount > MAX_DISCOUNT_PERCENT:
+        if not 0 <= discount <= MAX_DISCOUNT_PERCENT:
             raise ValueError("Invalid discount")
 
         normalized_cat = self._normalize_category(category)

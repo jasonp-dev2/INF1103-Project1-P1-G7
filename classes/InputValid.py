@@ -42,8 +42,19 @@ class inputvalid:
     # Must be a number above 0, decimals allowed (e.g. 4.50)
      try:
         price = float(price)
+        price = float(price)
      except ValueError:
         return "no"
      if price <= 0:
         return "no"
      return price
+
+    @staticmethod
+    def valid_discount(value: str, maximum: float) -> float | str:
+        try:
+            discount = float(value)
+        except ValueError:
+            return "no"
+        if not 0 <= discount <= maximum:
+            return "no"
+        return discount

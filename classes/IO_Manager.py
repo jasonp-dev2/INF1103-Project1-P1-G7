@@ -32,8 +32,9 @@ class IO_Manager:
         print("3. Show products near expiry")
         print("4. View product details")
         print("5. Delete product")
+        print("6. Set category discount")
         print("0. Exit")
-        return input("Please enter your choice (0-5): ").strip()
+        return input("Please enter your choice (0-6): ").strip()
 
     @staticmethod
     def collect_product_info() -> Product:
@@ -43,14 +44,7 @@ class IO_Manager:
             print("Invalid product name. Please try again.")
             product_name = inputvalid.valid_product_name(input(name_prompt))
 
-        for number, name in CATEGORIES.items():
-            print(f"{number}. {name}")
-
-        category_prompt = "Please enter product category number (1-7): "
-        category_number = inputvalid.valid_category(input(category_prompt))
-        while category_number == "no":
-            print("Invalid category number. Please try again.")
-            category_number = inputvalid.valid_category(input(category_prompt))
+        category = IO_Manager.collect_category()
 
         quantity_prompt = "Please enter quantity in stock: "
         quantity = inputvalid.valid_stock(input(quantity_prompt))
@@ -71,8 +65,29 @@ class IO_Manager:
             price = inputvalid.valid_price(input(price_prompt))
 
         return Product(
-            product_name, CATEGORIES[category_number], quantity, expiry_date, price
+            product_name, category, quantity, expiry_date, price
         )
+
+    @staticmethod
+    def collect_category() -> str:
+        for number, name in CATEGORIES.items():
+            print(f"{number}. {name}")
+
+        category_prompt = "Please enter product category number (1-7): "
+        category_number = inputvalid.valid_category(input(category_prompt))
+        while category_number == "no":
+            print("Invalid category number. Please try again.")
+            category_number = inputvalid.valid_category(input(category_prompt))
+        return CATEGORIES[category_number]
+
+    @staticmethod
+    def collect_discount(maximum: float) -> float:
+        prompt = f"Enter discount percentage (0-{maximum:g}): "
+        discount = inputvalid.valid_discount(input(prompt), maximum)
+        while discount == "no":
+            print(f"Please enter a percentage from 0 to {maximum:g}.")
+            discount = inputvalid.valid_discount(input(prompt), maximum)
+        return discount
 
     def _today(self) -> date:
         return self._fixed_date if self._fixed_date is not None else date.today()

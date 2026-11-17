@@ -6,7 +6,7 @@ from AIManager.AIManager import AIManager
 from classes.AIAssessment import AIAssessment
 from classes.Decision import Decision
 from classes.IO_Manager import IO_Manager
-from classes.logicManagerClass import logicManager
+from classes.logicManagerClass import MAX_DISCOUNT_PERCENT, logicManager
 from data_manager.DataAccessError import DataAccessError
 from data_manager.data_manager import DataManager
 
@@ -100,6 +100,14 @@ class ExpiryAdvisorApp:
             self._io_manager.show_warning("Could not save the deletion.")
 
 
+    def set_category_discount(self) -> None:
+        category = self._io_manager.collect_category()
+        discount = self._io_manager.collect_discount(MAX_DISCOUNT_PERCENT)
+        self._logic_manager.set_category_discount(category, discount)
+        self._io_manager.show_message(
+            f"Set {category} discount to {discount:g}% for this session."
+        )
+
     def run(self) -> None:
         try:
             try:
@@ -124,8 +132,10 @@ class ExpiryAdvisorApp:
                         self.view_saved_assessment()
                     elif choice == "5":
                         self.remove_product()
+                    elif choice == "6":
+                        self.set_category_discount()
                     else:
-                        self._io_manager.show_message("Please enter 0, 1, 2, 3, 4 or 5.")
+                        self._io_manager.show_message("Please enter a number from 0 to 6.")
                 except DataAccessError as error:
                     self._io_manager.show_warning(str(error))
                 choice = self._io_manager.collect_menu_choices()
