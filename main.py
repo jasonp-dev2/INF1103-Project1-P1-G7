@@ -10,11 +10,11 @@ from datetime import date
 from dotenv import load_dotenv
 
 import data_manager
-import io_manager
 import logic_manager
 from AIManager.AIManager import AIManager
+from classes.IO_Manager import IO_Manager
 
-
+io_manager = IO_Manager()
 
 def setup_logging() -> None:
     """Send diagnostic messages (e.g. AI failures) to logs/app.log."""
@@ -31,7 +31,7 @@ def assess_new_product(records: list, ai_manager: AIManager) -> None:
     today = date.today()
 
     # 1. io_manager: get validated product details from the user
-    product = io_manager.get_product_info()
+    product = io_manager.collect_product_info().to_dict()
 
     # 2. ai_manager: ask the AI for an assessment
     io_manager.show_message("Waiting for the AI response...")
@@ -105,8 +105,7 @@ def remove_product(records: list) -> None:
         if record["record_id"].upper() != record_id:
             continue
 
-        answer = input(f"Delete record {record_id}? (y/n): ").strip().lower()
-        if answer != "y":
+        if not io_manager.confirm_delete(record_id):
             io_manager.show_message("Deletion cancelled.")
             return
 
@@ -139,7 +138,7 @@ def run() -> None:
 
     # try/except: Ctrl+C (or closed input) ends the program cleanly
     try:
-        choice = io_manager.collect_menu_choice()
+        choice = io_manager.collect_menu_choices()
         while choice != "0":
             if choice == "1":
                 assess_new_product(records, ai_manager)
@@ -153,7 +152,7 @@ def run() -> None:
                 remove_product(records)
             else:
                 io_manager.show_message("Please enter 0, 1, 2, 3, 4 or 5.")
-            choice = io_manager.collect_menu_choice()
+            choice = io_manager.collect_menu_choices()
     except (KeyboardInterrupt, EOFError):
         io_manager.show_message("\nInput closed.")
     io_manager.show_message("Goodbye!")

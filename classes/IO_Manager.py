@@ -20,7 +20,7 @@ class IO_Manager:
 
     @staticmethod
     def collect_record_id() -> str:
-        return input("Please enter the record ID: ")
+        return input("Please enter the record ID: ").strip().upper()
 
     def display_info(self, record: dict) -> None:
         self.display_record(record)
@@ -31,10 +31,9 @@ class IO_Manager:
         print("2. Show all products")
         print("3. Show products near expiry")
         print("4. View product details")
-        print("5. Update product stock")
-        print("6. Delete product")
+        print("5. Delete product")
         print("0. Exit")
-        return input("Please enter your choice (0-6): ").strip()
+        return input("Please enter your choice (0-5): ").strip()
 
     @staticmethod
     def collect_product_info() -> Product:
@@ -96,11 +95,33 @@ class IO_Manager:
         print("Warning: " + text)
 
     def display_approval_request(self, decision: dict) -> None:
-        """Show the recommendation before InputHandler collects y/n."""
+        """Show the recommendation before asking staff to approve it."""
         print("\n--- Staff approval needed ---")
         print(f"Recommended discount: {decision['discount_percent']}%")
         print(f"Proposed price: ${decision['final_price']:.2f}")
         print("Reason:", decision["reason"])
+
+    @staticmethod
+    def collect_days_threshold() -> int:
+        prompt = "Show products expiring within how many days? "
+        days = inputvalid.valid_stock(input(prompt).strip())
+        while days == "no":
+            print("Please enter a whole number.")
+            days = inputvalid.valid_stock(input(prompt).strip())
+        return days
+
+    def collect_staff_approval(self, decision: dict) -> bool:
+        self.display_approval_request(decision)
+        prompt = "Approve this discount? (y/n): "
+        answer = input(prompt).strip().lower()
+        while answer not in ("y", "n"):
+            print("Please enter y or n.")
+            answer = input(prompt).strip().lower()
+        return answer == "y"
+
+    @staticmethod
+    def confirm_delete(record_id: str) -> bool:
+        return input(f"Delete record {record_id}? (y/n): ").strip().lower() == "y"
 
     def wait_for_enter(self) -> None:
         """Pause after a display when the caller asks for it."""

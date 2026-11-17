@@ -10,6 +10,15 @@ class Product:
         self._expiry = expiry_date
         self._price = product_price
 
+    def to_dict(self) -> dict:
+        return {
+            "product_name": self._name,
+            "category": self._category,
+            "quantity_in_stock": self._stock,
+            "expiry_date": self._expiry.isoformat(),
+            "current_price": round(self._price, 2),
+        }
+
     def get_discount_cap() -> float:
         return
 
