@@ -20,11 +20,14 @@ class OutputHandler:
         expiry = self._parse_expiry(record["product"]["expiry_date"])
         return expiry if expiry is not None else date.max
 
-    def show_message(self, text: str) -> None:
-        print(text)
+    def show_info(self, text: str) -> None:
+        print(f"  [INFO] {text}")
 
-    def show_warning(self, text: str) -> None:
-        print("Warning: " + text)
+    def show_success(self, text: str) -> None:
+        print(f"  [OK] {text}")
+
+    def show_error(self, text: str) -> None:
+        print(f"  [ERROR] {text}")
 
     def display_approval_request(self, decision: dict) -> None:
         """Show the recommendation before InputHandler collects y/n."""
@@ -33,21 +36,9 @@ class OutputHandler:
         print(f"Proposed price: ${decision['final_price']:.2f}")
         print("Reason:", decision["reason"])
 
-    def wait_for_enter(self) -> None:
-        """Pause after a display when the caller asks for it."""
-        input("\nPress Enter to continue...")
-
-    def display_record(self, record: dict) -> None:
-        """Show the details of a single product record."""
-        product = record["product"]
-
-        print("\n--- Product Record ---")
-        print("Record ID       :", record["record_id"])
-        print("Product         :", product["product_name"])
-        print("Category        :", product["category"])
-        print("Quantity        :", product["quantity_in_stock"])
-        print("Expiry date     :", product["expiry_date"])
-        print("Current price   : $" + format(product["current_price"], ".2f"))
+#   def wait_for_enter(self) -> None:
+#        """Pause after a display when the caller asks for it."""
+#        input("\nPress Enter to continue...") 
 
     def display_list(self, records: list[dict]) -> None:
         """Display saved assessments in a table sorted by expiry date, earliest first."""
@@ -183,7 +174,7 @@ class OutputHandler:
 
         # Final decision from logic_manager
         print("Saved outcome         :", decision["outcome"])
-        print("Rule applied    :", decision["rule"])
+        print("Rule applied    :", decision.get("rule", "N/A"))
         print("Saved discount  :",
               str(decision["discount_percent"]) + "%",
               "-> proposed price $" + format(decision["final_price"], ".2f"))

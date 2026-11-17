@@ -94,6 +94,31 @@ def view_saved_assessment(records: list) -> None:
     io_manager.show_message(
         "No record found with ID: " + record_id
     )
+def remove_product(records: list) -> None:
+    if not records:
+        io_manager.show_message("No saved assessments found.")
+        return
+
+    record_id = io_manager.collect_record_id().strip().upper()
+
+    for index, record in enumerate(records):
+        if record["record_id"].upper() != record_id:
+            continue
+
+        answer = input(f"Delete record {record_id}? (y/n): ").strip().lower()
+        if answer != "y":
+            io_manager.show_message("Deletion cancelled.")
+            return
+
+        updated_records = records[:index] + records[index + 1:]
+        if data_manager.save_records(updated_records):
+            records.pop(index)
+            io_manager.show_message(f"Deleted record {record_id}.")
+        else:
+            io_manager.show_warning("Could not save the deletion.")
+        return
+
+    io_manager.show_message(f"No record found with ID: {record_id}")
 
 def run() -> None:
     load_dotenv()      # reads the API key from the .env file
@@ -124,8 +149,10 @@ def run() -> None:
                 show_near_expiry_products(records)
             elif choice == "4":
                 view_saved_assessment(records)
+            elif choice == "5":
+                remove_product(records)
             else:
-                io_manager.show_message("Please enter 0, 1, 2, 3 or 4.")
+                io_manager.show_message("Please enter 0, 1, 2, 3, 4 or 5.")
             choice = io_manager.collect_menu_choice()
     except (KeyboardInterrupt, EOFError):
         io_manager.show_message("\nInput closed.")
