@@ -7,6 +7,7 @@ class inputvalid:
     #check for valid product info
     @staticmethod
     def valid_product_name(product_name: str):
+        product_name = product_name.strip()
         if product_name == "" or product_name.isdigit():
             return "no"
         return product_name
@@ -16,6 +17,8 @@ class inputvalid:
         if not category_number.isdigit():
                 return "no"
         number = int(category_number)
+        if not 1 <= number <= 7:
+            return "no"
         return number
 
     @staticmethod
@@ -44,5 +47,3 @@ class inputvalid:
      if price <= 0:
         return "no"
      return price
-
-   
