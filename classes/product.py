@@ -1,27 +1,17 @@
+from datetime import date, datetime
 
-from classes.Inputhandler import inputHandler
+class Product:
 
+    def __init__(self, product_name: str, product_category: str,
+                 product_stock: int, expiry_date: date, product_price):
+        self._name = product_name
+        self._category = product_category
+        self._stock = product_stock
+        self._expiry = expiry_date
+        self._price = product_price
 
-class product:
-    def __init__(self):
-        self.product:list[inputHandler] = []
+    def get_discount_cap() -> float:
+        return
 
-    def add_product(self, inputer: inputHandler):
-        self.product.append(inputer)
-
-    def remove_product(self, product_name: str):
-        for product in self.product:
-            if product.product_name == product_name:
-                self.product.remove(product)
-                print(f"Product '{product_name}' removed successfully.")
-                return
-        print(f"Product '{product_name}' not found.")
-
-
-    def display_all(self):
-        if not self.product:
-            print("No products available.")
-            return
-        for product in self.product:
-            product.display_info()
-            print("--------------------")
+    def set_discount_cap(self, discount: float):
+        return
