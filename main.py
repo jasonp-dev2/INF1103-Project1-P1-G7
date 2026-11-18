@@ -43,6 +43,7 @@ class ExpiryAdvisorApp:
         self.logic.load_categories(
             [record.to_dict()["product"] for record in self.records]
         )
+        self.logic.load_settings(self.data.load_discount_settings())
         self.io.show_message(f"Loaded {len(self.records)} saved record(s).")
         if self.data.warning:
             self.io.show_warning(self.data.warning)
@@ -137,6 +138,38 @@ class ExpiryAdvisorApp:
         else:
             self.io.show_warning("Stock update could not be saved.")
 
+    def configure_discounts(self) -> None:
+        """Edit and persist discount ceilings without overriding AI recommendations."""
+        while True:
+            action = self.io.collect_discount_settings_action()
+            if action == "0":
+                return
+            if action == "1":
+                self.io.display_discount_settings(self.logic.get_settings())
+                continue
+
+            previous = self.logic.get_settings()
+            if action == "2":
+                self.logic.set_max_discount(self.io.collect_discount_percent())
+            elif action == "3":
+                category = self.io.collect_discount_category()
+                cap = self.io.collect_discount_percent()
+                self.logic.set_category_discount_cap(category, cap)
+            elif action == "4":
+                category = self.io.collect_discount_category()
+                self.logic.remove_category_discount_cap(category)
+
+            if not self.data.save_discount_settings(self.logic.get_settings()):
+                self.logic.load_settings(previous)
+                self.io.show_warning("Could not save discount settings; changes reverted.")
+                continue
+            self.io.show_message("Discount limits saved.")
+            self.io.display_discount_settings(self.logic.get_settings())
+            self.io.show_message(
+                "The global maximum also applies. Raise it to 70% or more "
+                "if a category should allow 70%."
+            )
+
     def delete_product(self) -> None:
         record_id = self.io.collect_record_id()
         record = self.data.find_by_id(self.records, record_id)
@@ -169,6 +202,7 @@ class ExpiryAdvisorApp:
                 "4": self.view_saved_assessment,
                 "5": self.update_product_stock,
                 "6": self.delete_product,
+                "7": self.configure_discounts,
             }
             while True:
                 choice = self.io.collect_menu_choices()
