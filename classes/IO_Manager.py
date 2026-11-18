@@ -1,59 +1,69 @@
 from datetime import date, datetime
 
-from Lib import json
-from classes.productCatergory import productCategory
-
 DATE_FORMAT = "%Y-%m-%d"
 
+CATEGORIES = {
+    1: "Dairy & Eggs",
+    2: "Bakery",
+    3: "Meat & Seafood",
+    4: "Fruits & Vegetables",
+    5: "Frozen Food",
+    6: "Beverages",
+    7: "Other",
+}
+
+
 class IO_Manager:
+    """Collect validated terminal input and show assessments. No file or API access."""
+
     def __init__(self, today: date | None = None) -> None:
         self._fixed_date = today
 
     @staticmethod
     def valid_product_name(product_name: str) -> str | None:
-        product_name = product_name.strip()
-        if not product_name or product_name.isdigit():
-            return None
-        return product_name
+        name = product_name.strip()
+        return name if name and not name.isdigit() and len(name) <= 60 else None
 
     @staticmethod
     def valid_category(category_number: str) -> int | str:
         try:
-            number = int(category_number)
+            number = int(category_number.strip())
         except ValueError:
             return "no"
-        if not 1 <= number <= 7:
-            return "no"
-        return number
+        return number if number in CATEGORIES else "no"
 
     @staticmethod
-    def valid_stock(quantity: str) -> int | str:
-        if not quantity.isdecimal():
+    def valid_stock(quantity: str, allow_zero: bool = False) -> int | str:
+        value = quantity.strip()
+        if not value.isdecimal():
             return "no"
+        number = int(value)
+        minimum = 0 if allow_zero else 1
+        return number if minimum <= number <= 100000 else "no"
+
+    @staticmethod
+    def valid_date(date_str: str, today: date | None = None) -> date | str:
         try:
-            return int(quantity)
+            expiry = datetime.strptime(date_str.strip(), DATE_FORMAT).date()
         except ValueError:
             return "no"
+        current = today if today is not None else date.today()
+        days = (expiry - current).days
+        return expiry if -365 <= days <= 730 else "no"
 
     @staticmethod
-    def valid_date(date_str: str) -> date | str:
+    def valid_price(value: str) -> float | str:
         try:
-            return datetime.strptime(date_str.strip(), DATE_FORMAT).date()
+            price = float(value.strip())
         except ValueError:
             return "no"
-
-    @staticmethod
-    def valid_category(category_number: str) -> float | str:
-        if not category_number.isdigit():
-                    return "no"
-        number = int(category_number)
-        return number
+        return round(price, 2) if 0 < price <= 10000 else "no"
 
     @staticmethod
     def collect_record_id() -> str:
-        return input("Please enter the record ID: ")
+        return input("Enter record ID (e.g. PRD-0001): ").strip().upper()
 
-    def display_info(self, record: dict) -> None:
+    def display_info(self, record) -> None:
         self.display_record(record)
 
     def collect_menu_choices(self) -> str:
@@ -65,71 +75,79 @@ class IO_Manager:
         print("5. Update product stock")
         print("6. Delete product")
         print("0. Exit")
-        return input("Please enter your choice (0-6): ")
+        choice = input("Please enter your choice (0-6): ").strip()
+        while choice not in ("0", "1", "2", "3", "4", "5", "6"):
+            print("Invalid choice. Please enter 0 to 6.")
+            choice = input("Please enter your choice (0-6): ").strip()
+        return choice
 
-    @staticmethod
-    def collect_product_info() -> productCategory:
-        name_prompt = "Please enter product name: "
-        product_name = IO_Manager.valid_product_name(input(name_prompt))
-        while product_name is None:
-            print("Invalid product name. Please try again.")
-            product_name = IO_Manager.valid_product_name(input(name_prompt))
+    def collect_product_info(self) -> dict:
+        """Return the schema expected by AIManager, LogicManager and AssessmentRecord."""
+        print("\n--- Assess a new product ---")
+        name = self.valid_product_name(input("Please enter product name: "))
+        while name is None:
+            print("Invalid product name (1-60 characters, not just digits).")
+            name = self.valid_product_name(input("Please enter product name: "))
 
-        category_prompt = "Please enter product category number (1-7): "
-        category_number = IO_Manager.valid_category(input(category_prompt))
-        while category_number == "no":
-            print("Invalid category number. Please try again.")
-            category_number = IO_Manager.valid_category(input(category_prompt))
+        print("Category:")
+        for number, category in CATEGORIES.items():
+            print(f"{number}. {category}")
+        category = self.valid_category(input("Please enter category number (1-7): "))
+        while category == "no":
+            print("Invalid category number.")
+            category = self.valid_category(input("Please enter category number (1-7): "))
 
-        quantity_prompt = "Please enter quantity in stock: "
-        quantity = IO_Manager.valid_stock(input(quantity_prompt))
-        while quantity == "no":
-            print("Invalid quantity. Please try again.")
-            quantity = IO_Manager.valid_stock(input(quantity_prompt))
+        stock = self.collect_stock_quantity(allow_zero=False)
+        expiry = self.valid_date(input("Expiry date (YYYY-MM-DD): "), self._today())
+        while expiry == "no":
+            print("Invalid expiry date or date outside allowed range.")
+            expiry = self.valid_date(input("Expiry date (YYYY-MM-DD): "), self._today())
 
-        expiry_prompt = "Please enter expiry date (YYYY-MM-DD): "
-        expiry_date = IO_Manager.valid_date(input(expiry_prompt))
-        while expiry_date == "no":
-            print("Invalid date format. Please try again.")
-            expiry_date = IO_Manager.valid_date(input(expiry_prompt))
-
-        price_prompt = "Please enter product price per unit ($): "
-        price = IO_Manager.valid_price(input(price_prompt))
+        price = self.valid_price(input("Product price per unit ($): "))
         while price == "no":
-            print("Invalid price. Please try again.")
-            price = IO_Manager.valid_price(input(price_prompt))
+            print("Invalid price. Enter a number above 0 and no more than 10000.")
+            price = self.valid_price(input("Product price per unit ($): "))
 
-        return productCategory(product_name, category_number, quantity, expiry_date, price)
+        return {
+            "product_name": name,
+            "category": CATEGORIES[category],
+            "quantity_in_stock": stock,
+            "expiry_date": expiry.isoformat(),
+            "current_price": price,
+        }
+
+    def collect_stock_quantity(self, allow_zero: bool = False) -> int:
+        quantity = self.valid_stock(input("Quantity in stock: "), allow_zero)
+        while quantity == "no":
+            print("Enter a valid whole number (0 is allowed for updates)."
+                  if allow_zero else "Enter a whole number from 1 to 100000.")
+            quantity = self.valid_stock(input("Quantity in stock: "), allow_zero)
+        return quantity
+
+    def collect_days_threshold(self) -> int:
+        while True:
+            text = input("Show products expiring within how many days (1-365)? ").strip()
+            if text.isdecimal() and 1 <= int(text) <= 365:
+                return int(text)
+            print("Please enter a number from 1 to 365.")
+
+    def collect_staff_approval(self, decision: dict) -> bool:
+        self.display_approval_request(decision)
+        return self.ask_yes_no("Approve this discount? (y/n): ")
 
     @staticmethod
-    def update_product_stock():
-        search_id = IO_Manager.collect_record_id()#asks user for record ID
-        with open("products.json", "r") as file:
-            products_data = json.load(file)
-        found_product = None
-        for item in products_data:
-            if item["record_id"] == search_id:#seach through the products.json file for the record ID
-                found_product = item
-                break
-        if found_product is None:
-            print(f"No product found with ID {search_id}.")#is not found, print message and return
-            return
-        product = found_product["product"]
-        product_name = product["product_name"]
-        print(f"Current stock for {product_name}: {product['product_quantity']}")
+    def ask_yes_no(prompt: str) -> bool:
+        answer = input(prompt).strip().lower()
+        while answer not in ("y", "yes", "n", "no"):
+            print("Please answer y or n.")
+            answer = input(prompt).strip().lower()
+        return answer in ("y", "yes")
 
-        new_stock = input("Please enter the new stock quantity:")
-        while IO_Manager.valid_stock(new_stock) == "no":
-            print("Invalid quantity. Please try again.")
-            new_stock = input("Please enter the new stock quantity:")
-
-        new_stock = int(new_stock)
-        product["product_quantity"] = new_stock#update the stock value in the found product dictionary
-        with open("products.json", "w") as file:
-            json.dump(products_data, file, indent=4)#write the updated products_data back to the products.json file
-        
-        print(f"Stock for {product_name} updated to {new_stock}.")
-        return search_id
+    @staticmethod
+    def _as_dict(record) -> dict:
+        if isinstance(record, dict):
+            return record
+        return record.to_dict()
 
     def _today(self) -> date:
         return self._fixed_date if self._fixed_date is not None else date.today()
@@ -162,8 +180,9 @@ class IO_Manager:
         """Pause after a display when the caller asks for it."""
         input("\nPress Enter to continue...")
 
-    def display_record(self, record: dict) -> None:
+    def display_record(self, record) -> None:
         """Show the details of a single product record."""
+        record = self._as_dict(record)
         product = record["product"]
 
         print("\n--- Product Record ---")
@@ -174,8 +193,10 @@ class IO_Manager:
         print("Expiry date     :", product["expiry_date"])
         print("Current price   : $" + format(product["current_price"], ".2f"))
 
-    def display_list(self, records: list[dict]) -> None:
+    def display_list(self, records: list) -> None:
         """Display saved assessments in a table sorted by expiry date, earliest first."""
+        records = [self._as_dict(item) for item in records]
+        records = [item for item in records if not item.get('isDeleted', False)]
         print("\n--- Product Stock Table ---")
 
         if len(records) == 0:
@@ -261,8 +282,9 @@ class IO_Manager:
         print("Expired products must not be sold, even if previously approved.")
 
 
-    def display_result(self, record: dict) -> None:
+    def display_result(self, record) -> None:
         """Show the final processed result of one assessment."""
+        record = self._as_dict(record)
         product = record["product"]
         ai = record["ai_assessment"]
         decision = record["decision"]
@@ -308,7 +330,7 @@ class IO_Manager:
 
         # Final decision from logic_manager
         print("Saved outcome         :", decision["outcome"])
-        print("Rule applied    :", decision["rule"])
+        print("Rule applied    :", decision.get("rule", "N/A"))
         print("Saved discount  :",
               str(decision["discount_percent"]) + "%",
               "-> proposed price $" + format(decision["final_price"], ".2f"))
