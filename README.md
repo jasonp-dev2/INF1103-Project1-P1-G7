@@ -123,7 +123,13 @@ When finished, stop the Compose MongoDB container with:
 docker compose down
 ```
 
-GitHub Actions also runs the offline tests on pushes and pull requests.
+### Continuous Integration (CI)
+
+The GitHub Actions workflow in `.github/workflows/tests.yml` (**Python tests**) runs automatically on:
+- `push` to `main` or `integration`
+- any `pull_request`
+
+It sets up Python `3.12` on `ubuntu-latest`, installs dependencies (`python -m pip install -r requirements.txt`), and runs the offline test suite (`python -m pytest -v`) without requiring a live Gemini API key or MongoDB connection.
 
 ## Storage safety and legacy records
 
