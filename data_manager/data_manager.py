@@ -1,4 +1,9 @@
-"""Save locally first, then synchronize assessment records with MongoDB."""
+"""
+Data_manager class
+
+-saves locally through json file, then sync with MongoDB
+
+"""
 from __future__ import annotations
 
 from datetime import date
@@ -16,7 +21,7 @@ class DataManager:
     """Coordinate local and cloud storage; run one application instance at a time."""
     def __init__(self, repository: RecordRepository | None = None,
         json_path: str | Path | None = None) -> None:
-        default_file = Path(__file__).resolve().parent.parent / "data" / "records.json"
+        default_file = Path(__file__).resolve().parent.parent / "data" / "products.json"
         self._json = JsonRecordRepository(
             json_path or os.environ.get("DATA_FILE", default_file),
         )
