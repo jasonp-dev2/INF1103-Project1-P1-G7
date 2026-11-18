@@ -160,7 +160,10 @@ class DataManager:
             if record.is_deleted:
                 continue
             data = record.to_dict()
-            expiry = date.fromisoformat(data["product"]["expiry_date"])
+            try:
+                expiry = date.fromisoformat(data["product"]["expiry_date"])
+            except (ValueError, TypeError, KeyError):
+                continue  # Malformed saved dates must not crash filtering.
             if 0 <= (expiry - today).days <= days:
                 matches.append(record)
         return matches
