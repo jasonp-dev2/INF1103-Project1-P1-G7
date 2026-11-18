@@ -118,3 +118,11 @@ def test_assess_product_returns_validated_result():
     assert result["recommended_discount_percent"] == 35
     assert result["predicted_unsold_quantity"] == 6
     assert result["model_used"] == "gemini-stub"
+
+
+def test_gemini_client_configures_default_timeout():
+    from AIManager.GeminiClient import GeminiClient
+
+    client = GeminiClient(api_key="test-key", timeout_ms=12000)
+    assert client.is_configured() is True
+    assert client.timeout_ms == 12000

@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 from classes.IO_Manager import IO_Manager
 from data_manager.AssessmentRecord import AssessmentRecord
-from data_manager.RecordRepository import JsonRecordRepository
+from data_manager.RecordRepository import JsonRecordRepository, RecordRepository
 from data_manager.data_manager import DataManager
 
 
@@ -80,7 +80,7 @@ def test_bad_expiry_does_not_crash_filter():
     assert DataManager.filter_near_expiry([broken], 7, date.today()) == []
 
 
-class FakeRemoteRepository:
+class FakeRemoteRepository(RecordRepository):
     """In-memory repository used to exercise DataManager without MongoDB."""
 
     def __init__(self):

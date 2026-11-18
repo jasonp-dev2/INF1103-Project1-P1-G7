@@ -35,7 +35,7 @@
             "record_id": "PRD-0002",
             "isDeleted": true,
             "product": {
-                "product_name": "bunnies",
+                "product_name": "Salmon Fillet",
                 "category": "Meat & Seafood",
                 "quantity_in_stock": 600,
                 "expiry_date": "2026-12-02",
@@ -63,7 +63,7 @@
             "record_id": "PRD-0003",
             "isDeleted": false,
             "product": {
-                "product_name": "rats",
+                "product_name": "Chicken Breast",
                 "category": "Meat & Seafood",
                 "quantity_in_stock": 50,
                 "expiry_date": "2026-12-10",

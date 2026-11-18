@@ -117,16 +117,36 @@ class IO_Manager:
             self.show_warning("Please choose a category from 1 to 7.")
 
     def display_discount_settings(self, settings: dict) -> None:
-        from classes.logicManagerClass import logicManager
+        caps = settings.get(
+            "category_discount_caps", settings.get("category_discounts", {})
+        ) if isinstance(settings, dict) else {}
+        normalized_caps = {}
+        if isinstance(caps, dict):
+            for key, value in caps.items():
+                if isinstance(key, str) and isinstance(value, (int, float)):
+                    normalized_caps[self._normalize_category_key(key)] = min(max(0, value), 100)
 
-        policy = logicManager()
-        policy.load_settings(settings)
-        print(f"\nGlobal maximum discount: {policy.get_max_discount():g}% (fixed)")
+        print("\nGlobal maximum discount: 100% (fixed)")
         print("Category maximum discounts:")
         for name in CATEGORIES.values():
-            effective = policy.get_final_discount({"category": name}, 100)
+            bucket = self._normalize_category_key(name)
+            default_cap = 20 if bucket == "others" else 50
+            effective = normalized_caps.get(bucket, default_cap)
             print(f"  {name}: {effective:g}%")
         print("AI recommendations are capped, never replaced by these limits.")
+
+    @staticmethod
+    def _normalize_category_key(category: str) -> str:
+        cat = " ".join(category.lower().split())
+        if cat in ("other", "others"):
+            return "others"
+        if cat.endswith("ies") and len(cat) > 3:
+            return cat[:-3] + "y"
+        if cat.endswith(("sses", "shes", "ches", "xes", "oes")) and len(cat) > 3:
+            return cat[:-2]
+        if cat.endswith("s") and not cat.endswith("ss") and len(cat) > 3:
+            return cat[:-1]
+        return cat
 
     def collect_product_info(self) -> dict:
         """Return the schema expected by AIManager, LogicManager and AssessmentRecord."""
