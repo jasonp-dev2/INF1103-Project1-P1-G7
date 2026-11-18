@@ -181,3 +181,60 @@ def test_full_offline_create_update_delete_flow(tmp_path):
     assert len(data._json.load_all(include_deleted=True)) == 1
     assert data._json.load_all(include_deleted=True)[0].is_deleted
     data.close()
+
+
+def test_discount_settings_persist_across_manager_instances(tmp_path):
+    from classes.logicManagerClass import logicManager
+    file = tmp_path / "products.json"
+    data = DataManager(repository=FakeRemoteRepository(), json_path=file)
+    logic = logicManager()
+    logic.set_max_discount(80)
+    logic.set_category_discount_cap("Meat & Seafood", 70)
+    assert data.save_discount_settings(logic.get_settings())
+    new_data = DataManager(repository=FakeRemoteRepository(), json_path=file)
+    restored = logicManager()
+    restored.load_settings(new_data.load_discount_settings())
+    assert restored.get_final_discount({
+        "category": "Meat & Seafood"
+    }, 85) == 70
+    assert restored.get_final_discount({
+        "category": "Meat & Seafood"
+    }, 20) == 20
+    assert (tmp_path / "discount_settings.json").exists()
+    data.close()
+    new_data.close()
+
+
+def test_discount_config_cli_saves_setting(tmp_path):
+    from classes.logicManagerClass import logicManager
+    from main import ExpiryAdvisorApp
+
+    class SettingsIO(FakeIO):
+        def __init__(self):
+            super().__init__()
+            self.choices = iter(("2", "3", "0"))
+            self.percentages = iter((80, 70))
+
+        def collect_discount_settings_action(self):
+            return next(self.choices)
+
+        def collect_discount_percent(self):
+            return next(self.percentages)
+
+        def collect_discount_category(self):
+            return "Meat & Seafood"
+
+        def display_discount_settings(self, settings):
+            self.output = settings
+
+    storage = DataManager(
+        repository=FakeRemoteRepository(),
+        json_path=tmp_path / "records.json",
+    )
+    app = ExpiryAdvisorApp(
+        io=SettingsIO(), ai=FakeAI(), logic=logicManager(), data=storage
+    )
+    app.configure_discounts()
+    assert storage.load_discount_settings()["max_discount"] == 80
+    assert app.logic.get_final_discount({"category": "Meat & Seafood"}, 85) == 70
+    storage.close()
