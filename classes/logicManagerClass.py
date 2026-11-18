@@ -5,8 +5,9 @@ URGENT_DAYS = 3
 URGENT_UNSOLD_RATIO = 0.5     
 URGENT_MIN_DISCOUNT = 30
 
-# Default max discount, user can set with set_max_discount() 
-MAX_DISCOUNT_PERCENT = 50     
+# Hardcoded universal safety ceiling; staff may only configure category limits.
+MAX_DISCOUNT_PERCENT = 100
+DEFAULT_CATEGORY_DISCOUNT_CAP = 50     
 
 # The max discount itself can never be set above this.
 ABSOLUTE_MAX_DISCOUNT = 100
@@ -38,8 +39,7 @@ OUTCOMES = (
 class logicManager():
 
     def __init__(self):
-        self._max_discount = MAX_DISCOUNT_PERCENT
-        self._known_categories = set()
+                self._known_categories = set()
         # "others" always has a default discount so unknown categories are covered.
         self._category_discounts = {OTHERS_CATEGORY: DEFAULT_OTHERS_DISCOUNT}
 
@@ -90,13 +90,9 @@ class logicManager():
     # User-configurable discount settings
     # ---------------------------------------------------------------------------
 
-    def set_max_discount(self, max_discount: float) -> None:
-        if type(max_discount) not in (int, float) or not 0 <= max_discount <= ABSOLUTE_MAX_DISCOUNT:
-            raise ValueError(f"Max discount must be between 0 and {ABSOLUTE_MAX_DISCOUNT}")
-        self._max_discount = max_discount
-
     def get_max_discount(self) -> float:
-        return self._max_discount
+        """Fixed global ceiling, not configurable by staff."""
+        return MAX_DISCOUNT_PERCENT
 
     # A category cap is a ceiling, never a fixed discount.
     def set_category_discount_cap(self, category: str, cap: float) -> str:
@@ -119,22 +115,18 @@ class logicManager():
         return dict(self._category_discounts)
 
     def get_settings(self) -> dict:
-        return {
-            "max_discount": self._max_discount,
-            "category_discount_caps": dict(self._category_discounts),
-        }
+        return {"category_discount_caps": dict(self._category_discounts)}
 
     def load_settings(self, settings: dict) -> None:
         """Read settings saved by DataManager; accept old settings key as migration."""
         if not isinstance(settings, dict):
             raise ValueError("Discount settings must be a dictionary.")
-        global_cap = settings.get("max_discount", MAX_DISCOUNT_PERCENT)
+        # Ignore old persisted global maximum: the code now fixes it at 100%.
         caps = settings.get(
             "category_discount_caps", settings.get("category_discounts", {})
         )
         if not isinstance(caps, dict):
             raise ValueError("Category caps must be a dictionary.")
-        self.set_max_discount(global_cap)
         self._category_discounts = {OTHERS_CATEGORY: DEFAULT_OTHERS_DISCOUNT}
         for category, cap in caps.items():
             self.set_category_discount_cap(category, cap)
@@ -142,8 +134,8 @@ class logicManager():
     def get_final_discount(self, product: dict, recommended_discount: float) -> float:
         """Use the smallest of the AI recommendation and applicable maximums."""
         bucket = self._normalize_category(product.get("category", ""))
-        category_cap = self._category_discounts.get(bucket, self._max_discount)
-        return min(max(0, recommended_discount), category_cap, self._max_discount)
+        category_cap = self._category_discounts.get(bucket, DEFAULT_CATEGORY_DISCOUNT_CAP)
+        return min(max(0, recommended_discount), category_cap, MAX_DISCOUNT_PERCENT)
 
     # Return how many days left until expiry (negative means expired)
     def days_until_expiry(self, expiry_date: str, today: date) -> int:
