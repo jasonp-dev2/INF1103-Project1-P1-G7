@@ -1,5 +1,5 @@
 {
-    "version": 2,
+    "version": 3,
     "sync_pending": false,
     "records": [
         {
@@ -141,6 +141,35 @@
                 "discount_percent": 30,
                 "final_price": 28.0,
                 "waste_cost_if_unsold": 800.0,
+                "needs_staff_approval": true
+            },
+            "staff_approved": true
+        },
+        {
+            "record_id": "PRD-0006",
+            "isDeleted": false,
+            "product": {
+                "product_name": "Cabbage",
+                "category": "Fruits & Vegetables",
+                "quantity_in_stock": 5000,
+                "expiry_date": "2026-11-24",
+                "current_price": 2.3
+            },
+            "ai_assessment": {
+                "status": "ok",
+                "risk_level": "medium",
+                "recommended_discount_percent": 30,
+                "predicted_unsold_quantity": 1000,
+                "model_used": "gemini-3.5-flash-lite"
+            },
+            "decision": {
+                "outcome": "DISCOUNT_RECOMMENDED",
+                "rule": "R6",
+                "reason": "Near expiry with medium risk - a discount is recommended.",
+                "days_to_expiry": 6,
+                "discount_percent": 30,
+                "final_price": 1.61,
+                "waste_cost_if_unsold": 2300.0,
                 "needs_staff_approval": true
             },
             "staff_approved": true
