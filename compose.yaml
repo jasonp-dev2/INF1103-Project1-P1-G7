@@ -1,0 +1,38 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongo:27017/}
+      MONGODB_DATABASE: ${MONGODB_DATABASE:-expiry_advisor}
+      MONGODB_COLLECTION: ${MONGODB_COLLECTION:-assessments}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    stdin_open: true
+    tty: true
+
+volumes:
+  mongo_data:

@@ -10,7 +10,7 @@
 - `data_manager/data_manager.py`: local-first persistence and optional MongoDB sync.
 - `data_manager/RecordRepository.py`: abstract repository with JSON and MongoDB implementations.
 - `data_manager/AssessmentRecord.py`: validated encapsulated assessment records.
-- `tests/`: offline tests for business rules, records, JSON and four-manager workflows.
+- `tests/`: offline tests for business rules, AI response validation, records, persistence failure handling, and four-manager workflows.
 
 ## Setup
 
@@ -72,14 +72,57 @@ docker run --rm -it --env-file .env -v "${PWD}/data:/app/data" expiry-advisor
 
 ## Automated tests and Docker
 
+Build the image and run the offline test suite inside Docker:
+
 ```bash
 python -m pytest -v
 docker build -f dockerfile -t expiry-advisor .
-docker run --rm -it --env-file .env expiry-advisor
 docker run --rm --entrypoint python expiry-advisor -m pytest -v
 ```
 
-If you have no `.env` file, omit `--env-file .env` from the run command.
+### Option 1: External MongoDB URI and Gemini API key (standalone Docker)
+
+Using a `.env` file (copy `.env.example` to `.env` and set `GEMINI_API_KEY` and `MONGODB_URI`, e.g. a MongoDB Atlas `mongodb+srv://...` URI or `mongodb://host.docker.internal:27017/`):
+
+```bash
+docker run --rm -it --env-file .env --add-host=host.docker.internal:host-gateway -v "${PWD}/data:/app/data" expiry-advisor
+```
+
+Or pass `GEMINI_API_KEY` and `MONGODB_URI` directly on the command line without a `.env` file:
+
+```bash
+docker run --rm -it \
+  -e GEMINI_API_KEY="your_gemini_api_key" \
+  -e MONGODB_URI="mongodb+srv://user:password@cluster.mongodb.net/" \
+  -e MONGODB_DATABASE="expiry_advisor" \
+  -e MONGODB_COLLECTION="assessments" \
+  --add-host=host.docker.internal:host-gateway \
+  -v "${PWD}/data:/app/data" \
+  expiry-advisor
+```
+
+If you have no `.env` file and no external credentials, omit `--env-file .env` / `-e` flags to run with local JSON storage and manual-review fallback.
+
+### Option 2: Docker Compose with bundled live MongoDB
+
+Starts a live MongoDB 7 container and runs the interactive CLI connected to it (reads `GEMINI_API_KEY` from `.env` if present):
+
+```bash
+docker compose run --rm app
+```
+
+To use an external `MONGODB_URI` with Compose without starting the local `mongo` container:
+
+```bash
+docker compose run --rm --no-deps -e GEMINI_API_KEY="your_gemini_api_key" -e MONGODB_URI="mongodb+srv://user:password@cluster.mongodb.net/" app
+```
+
+When finished, stop the Compose MongoDB container with:
+
+```bash
+docker compose down
+```
+
 GitHub Actions also runs the offline tests on pushes and pull requests.
 
 ## Storage safety and legacy records
