@@ -8,6 +8,6 @@ requires-python = ">=3.10"
 # Let the tests import main.py and the four manager files from the project root
 pythonpath = ["."]
 # Look for tests in the tests/ folder
-testpaths = ["tests"]
+testpaths = ["tests", "classes"]
 # Show each test's name when running
 addopts = "-v"

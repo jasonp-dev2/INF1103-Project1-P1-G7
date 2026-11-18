@@ -54,7 +54,7 @@ def test_category_cap_limits_ai_recommendation():
 
 def test_discount_above_configured_cap_is_limited():
     manager = logicManager()
-    manager.set_max_discount(25)
+    manager.set_category_discount_cap("Dairy & Eggs", 25)
     result = manager.evaluate(product(), assessment(discount=90), TODAY)
     assert result["discount_percent"] == 25
 
@@ -68,7 +68,6 @@ def test_expired_overrides_category_configuration():
 
 def test_category_cap_does_not_raise_ai_recommendation():
     manager = logicManager()
-    manager.set_max_discount(80)
     manager.set_category_discount_cap("Meat & Seafood", 70)
     result = manager.evaluate(product(category="Meat & Seafood", days=5),
                               assessment(risk="medium", discount=20), TODAY)
@@ -77,7 +76,6 @@ def test_category_cap_does_not_raise_ai_recommendation():
 
 def test_meat_category_cap_at_70():
     manager = logicManager()
-    manager.set_max_discount(80)
     manager.set_category_discount_cap("Meat & Seafood", 70)
     result = manager.evaluate(product(category="Meat & Seafood", days=5),
                               assessment(risk="medium", discount=85), TODAY)
@@ -85,12 +83,12 @@ def test_meat_category_cap_at_70():
     assert result["needs_staff_approval"] is True
 
 
-def test_global_cap_remains_upper_bound():
+def test_category_can_exceed_default_50():
     manager = logicManager()
     manager.set_category_discount_cap("Meat & Seafood", 70)
     result = manager.evaluate(product(category="Meat & Seafood", days=5),
                               assessment(risk="medium", discount=85), TODAY)
-    assert result["discount_percent"] == 50
+    assert result["discount_percent"] == 70
 
 
 def test_zero_category_cap_blocks_discount():
@@ -104,7 +102,6 @@ def test_zero_category_cap_blocks_discount():
 
 def test_low_risk_does_not_get_forced_category_discount():
     manager = logicManager()
-    manager.set_max_discount(80)
     manager.set_category_discount_cap("Dairy & Eggs", 70)
     result = manager.evaluate(product(days=5),
                               assessment(risk="low", discount=25), TODAY)
@@ -113,7 +110,6 @@ def test_low_risk_does_not_get_forced_category_discount():
 
 def test_failed_ai_is_not_replaced_by_category_cap():
     manager = logicManager()
-    manager.set_max_discount(80)
     manager.set_category_discount_cap("Dairy & Eggs", 70)
     result = manager.evaluate(product(days=5), {"status": "failed"}, TODAY)
     assert result["outcome"] == "MANUAL_REVIEW"
@@ -122,7 +118,6 @@ def test_failed_ai_is_not_replaced_by_category_cap():
 
 def test_category_settings_round_trip_and_reset():
     manager = logicManager()
-    manager.set_max_discount(80)
     manager.set_category_discount_cap("Meat & Seafood", 70)
     saved = manager.get_settings()
     restored = logicManager()

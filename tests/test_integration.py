@@ -188,7 +188,6 @@ def test_discount_settings_persist_across_manager_instances(tmp_path):
     file = tmp_path / "products.json"
     data = DataManager(repository=FakeRemoteRepository(), json_path=file)
     logic = logicManager()
-    logic.set_max_discount(80)
     logic.set_category_discount_cap("Meat & Seafood", 70)
     assert data.save_discount_settings(logic.get_settings())
     new_data = DataManager(repository=FakeRemoteRepository(), json_path=file)
@@ -212,8 +211,8 @@ def test_discount_config_cli_saves_setting(tmp_path):
     class SettingsIO(FakeIO):
         def __init__(self):
             super().__init__()
-            self.choices = iter(("2", "3", "0"))
-            self.percentages = iter((80, 70))
+            self.choices = iter(("2", "0"))
+            self.percentages = iter((70,))
 
         def collect_discount_settings_action(self):
             return next(self.choices)
@@ -235,6 +234,29 @@ def test_discount_config_cli_saves_setting(tmp_path):
         io=SettingsIO(), ai=FakeAI(), logic=logicManager(), data=storage
     )
     app.configure_discounts()
-    assert storage.load_discount_settings()["max_discount"] == 80
+    assert storage.load_discount_settings()["category_discount_caps"]["meat & seafood"] == 70
     assert app.logic.get_final_discount({"category": "Meat & Seafood"}, 85) == 70
+    storage.close()
+
+
+def test_real_discount_menu_view_set_reset(tmp_path, monkeypatch, capsys):
+    from classes.logicManagerClass import logicManager
+    from main import ExpiryAdvisorApp
+
+    storage = DataManager(repository=FakeRemoteRepository(),
+                          json_path=tmp_path / "records.json")
+    app = ExpiryAdvisorApp(io=IO_Manager(), ai=FakeAI(),
+                          logic=logicManager(), data=storage)
+    # View defaults, set Meat to 70, view, reset Meat, exit.
+    inputs = iter(["1", "2", "3", "70", "1", "3", "3", "0"])
+    monkeypatch.setattr("builtins.input", lambda prompt: next(inputs))
+    app.configure_discounts()
+    output = capsys.readouterr().out
+    assert "100% (fixed)" in output
+    assert "Meat & Seafood: 70%" in output
+    assert "Other: 20%" in output
+    assert "Set global maximum" not in output
+    restored = logicManager()
+    restored.load_settings(storage.load_discount_settings())
+    assert restored.get_final_discount({"category": "Meat & Seafood"}, 85) == 50
     storage.close()

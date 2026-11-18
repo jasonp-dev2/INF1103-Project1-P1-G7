@@ -150,12 +150,10 @@ class ExpiryAdvisorApp:
 
             previous = self.logic.get_settings()
             if action == "2":
-                self.logic.set_max_discount(self.io.collect_discount_percent())
-            elif action == "3":
                 category = self.io.collect_discount_category()
                 cap = self.io.collect_discount_percent()
                 self.logic.set_category_discount_cap(category, cap)
-            elif action == "4":
+            elif action == "3":
                 category = self.io.collect_discount_category()
                 self.logic.remove_category_discount_cap(category)
 
@@ -166,8 +164,7 @@ class ExpiryAdvisorApp:
             self.io.show_message("Discount limits saved.")
             self.io.display_discount_settings(self.logic.get_settings())
             self.io.show_message(
-                "The global maximum also applies. Raise it to 70% or more "
-                "if a category should allow 70%."
+                "The overall limit is fixed at 100%. Category caps limit recommendations."
             )
 
     def delete_product(self) -> None:

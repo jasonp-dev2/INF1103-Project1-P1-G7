@@ -85,15 +85,14 @@ class IO_Manager:
     def collect_discount_settings_action(self) -> str:
         print("\n--- Configure discount maximums ---")
         print("1. View discount limits")
-        print("2. Set global maximum")
-        print("3. Set category maximum")
-        print("4. Reset category maximum")
+        print("2. Set category maximum")
+        print("3. Reset category maximum")
         print("0. Back")
         while True:
             choice = input("Choose an option: ").strip()
-            if choice in ("0", "1", "2", "3", "4"):
+            if choice in ("0", "1", "2", "3"):
                 return choice
-            self.show_warning("Please enter 0, 1, 2, 3 or 4.")
+            self.show_warning("Please enter 0, 1, 2 or 3.")
 
     def collect_discount_percent(self) -> float:
         while True:
@@ -118,15 +117,15 @@ class IO_Manager:
             self.show_warning("Please choose a category from 1 to 7.")
 
     def display_discount_settings(self, settings: dict) -> None:
-        global_cap = settings["max_discount"]
-        caps = settings["category_discount_caps"]
-        print(f"\nGlobal maximum discount: {global_cap:g}%")
+        from classes.logicManagerClass import logicManager
+
+        policy = logicManager()
+        policy.load_settings(settings)
+        print(f"\nGlobal maximum discount: {policy.get_max_discount():g}% (fixed)")
         print("Category maximum discounts:")
         for name in CATEGORIES.values():
-            cap = caps.get(name.lower(), global_cap)
-            effective = min(cap, global_cap)
-            print(f"  {name}: {effective:g}%"
-                  + (" (category limit)" if name.lower() in caps else " (global default)"))
+            effective = policy.get_final_discount({"category": name}, 100)
+            print(f"  {name}: {effective:g}%")
         print("AI recommendations are capped, never replaced by these limits.")
 
     def collect_product_info(self) -> dict:

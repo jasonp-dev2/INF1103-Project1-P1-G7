@@ -47,10 +47,10 @@ class TestCategoryNormalizing(unittest.TestCase):
         self.assertEqual(self.logic.resolve_category("berries"), "berry")
         self.assertEqual(self.logic.resolve_category("unknown"), "others")
 
-    def test_unknown_uses_other_cap(self):
+    def test_unconfigured_category_uses_default_cap(self):
         self.assertEqual(
             self.logic.get_final_discount(make_product("Hardware"), 50),
-            DEFAULT_OTHERS_DISCOUNT,
+            50,
         )
 
     def test_categories_are_not_changed_by_cap_setting(self):
@@ -63,23 +63,21 @@ class TestDiscountCaps(unittest.TestCase):
         self.logic = logicManager()
 
     def test_70_percent_category_cap_does_not_force_70(self):
-        self.logic.set_max_discount(80)
         self.logic.set_category_discount_cap("Meat & Seafood", 70)
         self.assertEqual(
             self.logic.get_final_discount(make_product(), 20), 20
         )
 
     def test_85_percent_ai_is_capped_at_70(self):
-        self.logic.set_max_discount(80)
         self.logic.set_category_discount_cap("Meat & Seafood", 70)
         self.assertEqual(
             self.logic.get_final_discount(make_product(), 85), 70
         )
 
-    def test_global_50_still_limits_category_70(self):
-        self.logic.set_category_discount_cap("Meat & Seafood", 70)
+    def test_fixed_global_100_limits_recommendation(self):
+        self.logic.set_category_discount_cap("Meat & Seafood", 100)
         self.assertEqual(
-            self.logic.get_final_discount(make_product(), 85), 50
+            self.logic.get_final_discount(make_product(), 150), 100
         )
 
     def test_zero_cap_blocks_discount(self):
@@ -94,9 +92,9 @@ class TestDiscountCaps(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     self.logic.set_category_discount_cap("Meat", cap)
 
-    def test_invalid_global_cap(self):
-        with self.assertRaises(ValueError):
-            self.logic.set_max_discount(105)
+    def test_old_global_setting_does_not_change_fixed_limit(self):
+        self.logic.load_settings({"max_discount": 25})
+        self.assertEqual(self.logic.get_max_discount(), 100)
 
     def test_reset_category_cap(self):
         self.logic.set_category_discount_cap("Meat & Seafood", 70)
@@ -106,7 +104,6 @@ class TestDiscountCaps(unittest.TestCase):
         )
 
     def test_save_load_settings(self):
-        self.logic.set_max_discount(80)
         self.logic.set_category_discount_cap("Meat & Seafood", 70)
         new_logic = logicManager()
         new_logic.load_settings(self.logic.get_settings())
@@ -125,7 +122,6 @@ class TestDiscountCaps(unittest.TestCase):
 class TestRuleOrder(unittest.TestCase):
     def setUp(self):
         self.logic = logicManager()
-        self.logic.set_max_discount(80)
         self.logic.set_category_discount_cap("Meat & Seafood", 70)
 
     def test_expired_never_discounted(self):

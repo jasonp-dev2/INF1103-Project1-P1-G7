@@ -38,23 +38,19 @@ JSON backup at `data/products.json` and synchronises pending writes on reconnect
 4. View a saved assessment by record ID.
 5. Change stock and run a fresh AI/Logic assessment; old staff approval is invalidated.
 6. Soft-delete a record by ID (retaining its ID and tombstone for sync).
-7. Configure discount limits (view, set global cap, set/reset category cap).
+7. Configure discount limits (view, set/reset category cap).
 0. Exit.
 
 ## Configure category discount ceilings
 
-Choose menu **7** → **2** to set the global maximum to **80%**, then
-**7** → **3** → **Meat & Seafood** → **70%**. Setting a category cap to 70%
-does **not** force the discount to 70%; it only limits the AI/rule recommendation.
-
-Example: with global 80% and category 70%, a 20% recommendation remains
-20%, while an 85% recommendation is capped at 70%. Expired items and
-AI failures still go through the existing safety/manual-review rules.
-
-The global maximum defaults to 50%, so it must be raised to at least 70%
-to allow a 70% category ceiling. Other categories still use the global
-maximum unless a separate cap is configured. The existing urgent-risk rule
-may raise an AI recommendation to its 30% minimum, subject to both caps.
+Choose menu **7** -> **2** -> **Meat & Seafood** -> **70%**.
+The overall limit is fixed at 100%; only category caps are configurable.
+A 20% recommendation remains 20%, while an 85% recommendation is capped
+at 70%. Unconfigured categories default to 50%; Other defaults to 20%.
+Use submenu option **3** to reset a category to its default.
+Expired items and AI failures retain their safety/manual-review rules.
+The urgent-risk rule may raise a recommendation to 30%, subject to the
+category cap and fixed overall limit.
 
 Settings are saved separately in **data/discount_settings.json** by
 DataManager and persist between runs when `data/` is mounted in Docker.
