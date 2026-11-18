@@ -39,7 +39,7 @@ OUTCOMES = (
 class logicManager():
 
     def __init__(self):
-                self._known_categories = set()
+        self._known_categories = set()
         # "others" always has a default discount so unknown categories are covered.
         self._category_discounts = {OTHERS_CATEGORY: DEFAULT_OTHERS_DISCOUNT}
 
