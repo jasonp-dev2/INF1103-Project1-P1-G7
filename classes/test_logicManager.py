@@ -1,7 +1,7 @@
 import unittest
 from datetime import date, timedelta
 
-from logicManagerClass import (
+from classes.logicManagerClass import (
     logicManager,
     OUTCOME_EXPIRED, OUTCOME_NOT_NEAR_EXPIRY, OUTCOME_MANUAL_REVIEW,
     OUTCOME_URGENT_DISCOUNT, OUTCOME_DISCOUNT, OUTCOME_MONITOR,
