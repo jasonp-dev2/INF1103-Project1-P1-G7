@@ -6,7 +6,7 @@
 - `classes/IO_Manager.py`: terminal input validation and result display.
 - `AIManager/AIManager.py`: AI prompting, parsing, and response validation.
 - `AIManager/AIService.py` and `GeminiClient.py`: abstract AI contract and Gemini implementation.
-- `classes/logicManagerClass.py`: OOP discount rules, configurable category maximum discounts (not fixed overrides) and global maximum.
+- `classes/logicManagerClass.py`: OOP discount rules and configurable category maximum discounts (not fixed overrides).
 - `data_manager/data_manager.py`: local-first persistence and optional MongoDB sync.
 - `data_manager/RecordRepository.py`: abstract repository with JSON and MongoDB implementations.
 - `data_manager/AssessmentRecord.py`: validated encapsulated assessment records.
@@ -52,23 +52,14 @@ Expired items and AI failures retain their safety/manual-review rules.
 The urgent-risk rule may raise a recommendation to 30%, subject to the
 category cap and fixed overall limit.
 
-Settings are saved separately in **data/discount_settings.json** by
-DataManager and persist between runs when `data/` is mounted in Docker.
-**The settings file is local-only and is not currently synced to MongoDB.**
-Assessment records retain the existing JSON-to-MongoDB sync.
-
-For Windows Docker Desktop with MongoDB running on Windows, set
-`MONGODB_URI=mongodb://host.docker.internal:27017/` in the private `.env`.
-
-```powershell
-docker build -f dockerfile -t expiry-advisor .
-docker run --rm --entrypoint python expiry-advisor -m pytest -v
-docker run --rm -it --env-file .env -v "${PWD}/data:/app/data" expiry-advisor
-```
+Settings are saved separately in `data/discount_settings.json` by `DataManager`
+and persist between runs when `data/` is mounted in Docker.
+**The settings file is local-only and is not synced to MongoDB** (only
+assessment records in `data/products.json` sync to MongoDB).
 
 ## Automated tests and Docker
 
-Build the image and run the offline test suite inside Docker:
+Build the image and run the offline test suite (locally or in Docker):
 
 ```bash
 python -m pytest -v
@@ -76,15 +67,15 @@ docker build -f dockerfile -t expiry-advisor .
 docker run --rm --entrypoint python expiry-advisor -m pytest -v
 ```
 
-### Option 1: External MongoDB URI and Gemini API key (standalone Docker)
+### Running with Docker (`docker run`)
 
-Using a `.env` file (copy `.env.example` to `.env` and set `GEMINI_API_KEY` and `MONGODB_URI`, e.g. a MongoDB Atlas `mongodb+srv://...` URI or `mongodb://host.docker.internal:27017/`):
+Using `.env` (with `GEMINI_API_KEY` and `MONGODB_URI`, e.g. the provided Atlas `mongodb+srv://...` URI or `mongodb://host.docker.internal:27017/` for a host-installed MongoDB):
 
 ```bash
 docker run --rm -it --env-file .env --add-host=host.docker.internal:host-gateway -v "${PWD}/data:/app/data" expiry-advisor
 ```
 
-Or pass `GEMINI_API_KEY` and `MONGODB_URI` directly on the command line without a `.env` file:
+Or pass credentials directly without a `.env` file:
 
 ```bash
 docker run --rm -it \
@@ -97,27 +88,19 @@ docker run --rm -it \
   expiry-advisor
 ```
 
-If you have no `.env` file and no external credentials, omit `--env-file .env` / `-e` flags to run with local JSON storage and manual-review fallback.
+Omit `--env-file .env` / `-e` flags to run offline with local JSON storage and manual-review fallback.
 
-### Option 2: Docker Compose with bundled live MongoDB
+### Cloud MongoDB (Atlas) setup & limitations
 
-Starts a live MongoDB 7 container and runs the interactive CLI connected to it (reads `GEMINI_API_KEY` from `.env` if present):
+The MongoDB Atlas cluster is **already set up** with a database user (username and password provided separately).
 
-```bash
-docker compose run --rm app
-```
+1. Paste the provided `MONGODB_URI` and `GEMINI_API_KEY` into `.env` (or pass them via `-e` above).
+2. Run the `docker run` command above and confirm startup prints `Loaded <n> saved record(s) (mongodb).`.
 
-To use an external `MONGODB_URI` with Compose without starting the local `mongo` container:
-
-```bash
-docker compose run --rm --no-deps -e GEMINI_API_KEY="your_gemini_api_key" -e MONGODB_URI="mongodb+srv://user:password@cluster.mongodb.net/" app
-```
-
-When finished, stop the Compose MongoDB container with:
-
-```bash
-docker compose down
-```
+**Limitations:**
+- **Single-instance design**: Run one app instance at a time; concurrent multi-user edits are not merged.
+- **Empty cloud cluster overwrites unflagged local JSON**: If the cloud collection is empty and `data/products.json` has `sync_pending: false`, startup refreshes `data/products.json` from the cloud (`[]`).
+- **Network dependency**: Requires outbound DNS SRV + TLS access to Atlas (timeouts: `8s` server selection, `5s` connect, `10s` socket). If Atlas is unreachable, writes stay local (`sync_pending: true`) until reconnect.
 
 ### Continuous Integration (CI)
 

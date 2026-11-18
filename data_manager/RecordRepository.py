@@ -147,9 +147,8 @@ class MongoRecordRepository(RecordRepository):
 
     def _collection(self):
         if self._client is None:
-            self._client = MongoClient(self._uri, serverSelectionTimeoutMS=3000,
-                                       connectTimeoutMS=3000, socketTimeoutMS=5000,
-                                       timeoutMS=5000)
+            self._client = MongoClient(self._uri, serverSelectionTimeoutMS=8000,
+                                       connectTimeoutMS=5000, socketTimeoutMS=10000)
         return self._client[self._database][self._name]
 
     def load_all(self, include_deleted: bool = False) -> list[AssessmentRecord]:
