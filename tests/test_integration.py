@@ -78,3 +78,106 @@ def test_bad_expiry_does_not_crash_filter():
     data["product"]["expiry_date"] = "invalid"
     broken = AssessmentRecord.from_dict(data)
     assert DataManager.filter_near_expiry([broken], 7, date.today()) == []
+
+
+class FakeRemoteRepository:
+    """In-memory repository used to exercise DataManager without MongoDB."""
+
+    def __init__(self):
+        self.records = {}
+
+    def load_all(self, include_deleted=False):
+        records = [AssessmentRecord.from_dict(data) for data in self.records.values()]
+        return records if include_deleted else [r for r in records if not r.is_deleted]
+
+    def save_all(self, records):
+        for record in records:
+            self.records[record.record_id] = record.to_dict()
+        return True
+
+    def close(self):
+        pass
+
+
+class FakeAI:
+    STATUS_OK = "ok"
+
+    class Client:
+        def is_configured(self):
+            return True
+
+    def __init__(self):
+        self.ai_client = self.Client()
+        self.calls = 0
+
+    def assess_product(self, product, today):
+        self.calls += 1
+        return {
+            "status": "ok",
+            "risk_level": "high",
+            "recommended_discount_percent": 30,
+            "predicted_unsold_quantity": min(5, product["quantity_in_stock"]),
+        }
+
+
+class FakeIO:
+    def __init__(self):
+        self.messages = []
+        self.output = None
+
+    def collect_product_info(self):
+        return sample_record().to_dict()["product"]
+
+    def collect_staff_approval(self, decision):
+        return True
+
+    def collect_record_id(self):
+        return "PRD-0001"
+
+    def collect_stock_quantity(self, allow_zero=False):
+        assert allow_zero
+        return 0
+
+    def ask_yes_no(self, prompt):
+        return True
+
+    def show_message(self, message):
+        self.messages.append(message)
+
+    def show_warning(self, message):
+        self.messages.append(message)
+
+    def display_result(self, record):
+        self.output = record.to_dict()
+
+    def display_list(self, records):
+        pass
+
+
+def test_full_offline_create_update_delete_flow(tmp_path):
+    from classes.logicManagerClass import logicManager
+    from main import ExpiryAdvisorApp
+
+    data = DataManager(
+        repository=FakeRemoteRepository(),
+        json_path=tmp_path / "records.json",
+    )
+    io = FakeIO()
+    ai = FakeAI()
+    app = ExpiryAdvisorApp(io=io, ai=ai, logic=logicManager(), data=data)
+
+    app._load()
+    assert app.records == []
+    app.assess_new_product()
+    assert len(app.records) == 1
+    assert app.records[0].record_id == "PRD-0001"
+
+    app.update_product_stock()
+    assert app.records[0].to_dict()["product"]["quantity_in_stock"] == 0
+    assert ai.calls == 2
+
+    app.delete_product()
+    assert app.records == []
+    assert len(data._json.load_all(include_deleted=True)) == 1
+    assert data._json.load_all(include_deleted=True)[0].is_deleted
+    data.close()
