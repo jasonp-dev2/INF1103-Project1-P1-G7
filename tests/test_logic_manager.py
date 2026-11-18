@@ -44,10 +44,10 @@ def test_urgent_uses_ai_risk_and_unsold_quantity():
     assert result["discount_percent"] == 40
 
 
-def test_category_configuration_overrides_ai():
+def test_category_cap_limits_ai_recommendation():
     manager = logicManager()
     manager.load_categories([product()])
-    manager.set_category_discount("Dairy & Eggs", 15)
+    manager.set_category_discount_cap("Dairy & Eggs", 15)
     result = manager.evaluate(product(), assessment(), TODAY)
     assert result["discount_percent"] == 15
 
@@ -62,6 +62,71 @@ def test_discount_above_configured_cap_is_limited():
 def test_expired_overrides_category_configuration():
     manager = logicManager()
     manager.load_categories([product()])
-    manager.set_category_discount("Dairy & Eggs", 35)
+    manager.set_category_discount_cap("Dairy & Eggs", 35)
     result = manager.evaluate(product(days=-2), assessment(), TODAY)
     assert result["discount_percent"] == 0
+
+def test_category_cap_does_not_raise_ai_recommendation():
+    manager = logicManager()
+    manager.set_max_discount(80)
+    manager.set_category_discount_cap("Meat & Seafood", 70)
+    result = manager.evaluate(product(category="Meat & Seafood", days=5),
+                              assessment(risk="medium", discount=20), TODAY)
+    assert result["discount_percent"] == 20
+
+
+def test_meat_category_cap_at_70():
+    manager = logicManager()
+    manager.set_max_discount(80)
+    manager.set_category_discount_cap("Meat & Seafood", 70)
+    result = manager.evaluate(product(category="Meat & Seafood", days=5),
+                              assessment(risk="medium", discount=85), TODAY)
+    assert result["discount_percent"] == 70
+    assert result["needs_staff_approval"] is True
+
+
+def test_global_cap_remains_upper_bound():
+    manager = logicManager()
+    manager.set_category_discount_cap("Meat & Seafood", 70)
+    result = manager.evaluate(product(category="Meat & Seafood", days=5),
+                              assessment(risk="medium", discount=85), TODAY)
+    assert result["discount_percent"] == 50
+
+
+def test_zero_category_cap_blocks_discount():
+    manager = logicManager()
+    manager.set_category_discount_cap("Dairy & Eggs", 0)
+    result = manager.evaluate(product(days=5),
+                              assessment(risk="medium", discount=40), TODAY)
+    assert result["discount_percent"] == 0
+    assert not result["needs_staff_approval"]
+
+
+def test_low_risk_does_not_get_forced_category_discount():
+    manager = logicManager()
+    manager.set_max_discount(80)
+    manager.set_category_discount_cap("Dairy & Eggs", 70)
+    result = manager.evaluate(product(days=5),
+                              assessment(risk="low", discount=25), TODAY)
+    assert result["discount_percent"] == 0
+
+
+def test_failed_ai_is_not_replaced_by_category_cap():
+    manager = logicManager()
+    manager.set_max_discount(80)
+    manager.set_category_discount_cap("Dairy & Eggs", 70)
+    result = manager.evaluate(product(days=5), {"status": "failed"}, TODAY)
+    assert result["outcome"] == "MANUAL_REVIEW"
+    assert result["discount_percent"] == 0
+
+
+def test_category_settings_round_trip_and_reset():
+    manager = logicManager()
+    manager.set_max_discount(80)
+    manager.set_category_discount_cap("Meat & Seafood", 70)
+    saved = manager.get_settings()
+    restored = logicManager()
+    restored.load_settings(saved)
+    assert restored.get_settings() == saved
+    restored.remove_category_discount_cap("Meat & Seafood")
+    assert "meat & seafood" not in restored.get_category_discount_caps()
