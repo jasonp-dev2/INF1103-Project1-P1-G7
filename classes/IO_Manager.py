@@ -74,12 +74,60 @@ class IO_Manager:
         print("4. View product details")
         print("5. Update product stock")
         print("6. Delete product")
+        print("7. Configure discount limits")
         print("0. Exit")
-        choice = input("Please enter your choice (0-6): ").strip()
-        while choice not in ("0", "1", "2", "3", "4", "5", "6"):
-            print("Invalid choice. Please enter 0 to 6.")
-            choice = input("Please enter your choice (0-6): ").strip()
+        choice = input("Please enter your choice (0-7): ").strip()
+        while choice not in ("0", "1", "2", "3", "4", "5", "6", "7"):
+            print("Invalid choice. Please enter 0 to 7.")
+            choice = input("Please enter your choice (0-7): ").strip()
         return choice
+
+    def collect_discount_settings_action(self) -> str:
+        print("\n--- Configure discount maximums ---")
+        print("1. View discount limits")
+        print("2. Set global maximum")
+        print("3. Set category maximum")
+        print("4. Reset category maximum")
+        print("0. Back")
+        while True:
+            choice = input("Choose an option: ").strip()
+            if choice in ("0", "1", "2", "3", "4"):
+                return choice
+            self.show_warning("Please enter 0, 1, 2, 3 or 4.")
+
+    def collect_discount_percent(self) -> float:
+        while True:
+            text = input("Enter maximum discount (0-100%): ").strip()
+            try:
+                percent = float(text)
+            except ValueError:
+                self.show_warning("Enter a number from 0 to 100.")
+                continue
+            if 0 <= percent <= 100:
+                return percent
+            self.show_warning("Enter a number from 0 to 100.")
+
+    def collect_discount_category(self) -> str:
+        print("Category:")
+        for number, name in CATEGORIES.items():
+            print(f"{number}. {name}")
+        while True:
+            choice = self.valid_category(input("Choose category (1-7): "))
+            if choice != "no":
+                return CATEGORIES[choice]
+            self.show_warning("Please choose a category from 1 to 7.")
+
+    def display_discount_settings(self, settings: dict) -> None:
+        global_cap = settings["max_discount"]
+        caps = settings["category_discount_caps"]
+        print(f"\nGlobal maximum discount: {global_cap:g}%")
+        print("Category maximum discounts:")
+        for name in CATEGORIES.values():
+            cap = caps.get(name.lower(), global_cap)
+            effective = min(cap, global_cap)
+            print(f"  {name}: {effective:g}%"
+                  + (" (category limit)" if name.lower() in caps else " (global default)"))
+        print("AI recommendations are capped, never replaced by these limits.")
 
     def collect_product_info(self) -> dict:
         """Return the schema expected by AIManager, LogicManager and AssessmentRecord."""
