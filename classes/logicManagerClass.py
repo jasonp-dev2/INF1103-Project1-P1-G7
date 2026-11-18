@@ -5,8 +5,9 @@ URGENT_DAYS = 3
 URGENT_UNSOLD_RATIO = 0.5     
 URGENT_MIN_DISCOUNT = 30
 
-# Default max discount, user can set with set_max_discount() 
-MAX_DISCOUNT_PERCENT = 50     
+# Hardcoded universal safety ceiling; staff may only configure category limits.
+MAX_DISCOUNT_PERCENT = 100
+DEFAULT_CATEGORY_DISCOUNT_CAP = 50     
 
 # The max discount itself can never be set above this.
 ABSOLUTE_MAX_DISCOUNT = 100
@@ -38,7 +39,6 @@ OUTCOMES = (
 class logicManager():
 
     def __init__(self):
-        self._max_discount = MAX_DISCOUNT_PERCENT
         self._known_categories = set()
         # "others" always has a default discount so unknown categories are covered.
         self._category_discounts = {OTHERS_CATEGORY: DEFAULT_OTHERS_DISCOUNT}
@@ -90,60 +90,52 @@ class logicManager():
     # User-configurable discount settings
     # ---------------------------------------------------------------------------
 
-    def set_max_discount(self, max_discount: float) -> None:
-        if max_discount < 0 or max_discount > ABSOLUTE_MAX_DISCOUNT:
-            raise ValueError(f"Max discount must be between 0 and {ABSOLUTE_MAX_DISCOUNT}")
-        self._max_discount = max_discount
-
     def get_max_discount(self) -> float:
-        return self._max_discount
+        """Fixed global ceiling, not configurable by staff."""
+        return MAX_DISCOUNT_PERCENT
 
-    #Setting the category discount
-    def set_category_discount(self, category, discount: float) -> str:
-        if not isinstance(discount, (int, float)) or isinstance(discount, bool):
-            raise ValueError("Discount must be a number")
-    
-        if discount < 0 or discount > ABSOLUTE_MAX_DISCOUNT:
-            raise ValueError("Invalid discount")
-
-    # Buckeet meaning its just to show the user where its stored under (typo errors)
-        bucket = self.resolve_category(category)
-        self._category_discounts[bucket] = discount
+    # A category cap is a ceiling, never a fixed discount.
+    def set_category_discount_cap(self, category: str, cap: float) -> str:
+        if type(cap) not in (int, float) or not 0 <= cap <= ABSOLUTE_MAX_DISCOUNT:
+            raise ValueError("Category maximum must be between 0 and 100.")
+        bucket = self._normalize_category(category)
+        if not bucket:
+            raise ValueError("Category cannot be blank.")
+        self._category_discounts[bucket] = cap
         return bucket
 
-    # Go back to AI's discount for that category ("others" goes back to its default)
-    def remove_category_discount(self, category) -> None:
-        bucket = self.resolve_category(category)
+    def remove_category_discount_cap(self, category: str) -> None:
+        bucket = self._normalize_category(category)
         if bucket == OTHERS_CATEGORY:
             self._category_discounts[OTHERS_CATEGORY] = DEFAULT_OTHERS_DISCOUNT
         else:
             self._category_discounts.pop(bucket, None)
 
-    def get_category_discounts(self) -> dict:
+    def get_category_discount_caps(self) -> dict:
         return dict(self._category_discounts)
 
-    # For saving/loading the user's settings (json/mongodb)
-    # (Discounts still work after restarting program)
     def get_settings(self) -> dict:
-        return {
-            "max_discount": self._max_discount,
-            "category_discounts": dict(self._category_discounts),
-        }
+        return {"category_discount_caps": dict(self._category_discounts)}
 
-    # Call load_categories() first, then this.
     def load_settings(self, settings: dict) -> None:
-        self.set_max_discount(settings.get("max_discount", MAX_DISCOUNT_PERCENT))
-        for category, discount in settings.get("category_discounts", {}).items():
-            self.set_category_discount(category, discount)
+        """Read settings saved by DataManager; accept old settings key as migration."""
+        if not isinstance(settings, dict):
+            raise ValueError("Discount settings must be a dictionary.")
+        # Ignore old persisted global maximum: the code now fixes it at 100%.
+        caps = settings.get(
+            "category_discount_caps", settings.get("category_discounts", {})
+        )
+        if not isinstance(caps, dict):
+            raise ValueError("Category caps must be a dictionary.")
+        self._category_discounts = {OTHERS_CATEGORY: DEFAULT_OTHERS_DISCOUNT}
+        for category, cap in caps.items():
+            self.set_category_discount_cap(category, cap)
 
-    # Category discount overrides the AI's discount. No category discount -> keep AI's.
     def get_final_discount(self, product: dict, recommended_discount: float) -> float:
-        bucket = self.resolve_category(product.get("category"))
-
-        if bucket in self._category_discounts:
-            return self._category_discounts[bucket]
-
-        return recommended_discount
+        """Use the smallest of the AI recommendation and applicable maximums."""
+        bucket = self._normalize_category(product.get("category", ""))
+        category_cap = self._category_discounts.get(bucket, DEFAULT_CATEGORY_DISCOUNT_CAP)
+        return min(max(0, recommended_discount), category_cap, MAX_DISCOUNT_PERCENT)
 
     # Return how many days left until expiry (negative means expired)
     def days_until_expiry(self, expiry_date: str, today: date) -> int:
@@ -232,41 +224,13 @@ class logicManager():
         unsold_ratio = self.calculate_unsold_ratio(predicted_unsold, quantity)
         waste_cost = self.calculate_waste_cost(predicted_unsold, price)
 
-        # Check category override.
-        bucket = self.resolve_category(product.get("category"))
-
-        if bucket in self._category_discounts:
-
-            # User category discount overrides AI completely.
-            percent = self._category_discounts[bucket]
-
-            # Apply global maximum discount.
-            percent = self.apply_discount_cap(
-            percent, self._max_discount
-            )
-
-            # A 0% category discount means no discount.
-            if percent == 0:
-                return self.make_decision(
-                    OUTCOME_MONITOR, "R4",
-                    f"User-configured discount for {bucket} is 0%. "
-                    "No discount will be applied.",
-                    days_left, 0, price, waste_cost
-                )
-            final = self.make_decision(
-                OUTCOME_URGENT_DISCOUNT if days_left <= URGENT_DAYS else OUTCOME_DISCOUNT, "R4",
-                f"User-configured {bucket} discount overrides the AI recommendation.",
-                days_left, percent, price, waste_cost
-            )
-            return final
-
         # Rule5: Multi-condition rule using AI output. (Urgent)
         #      Few days left AND high risk AND alot expected unsold.
         if (days_left <= URGENT_DAYS and risk == "high" and unsold_ratio >= URGENT_UNSOLD_RATIO):
             percent = max(ai_percent, URGENT_MIN_DISCOUNT)
-            percent = self.apply_discount_cap(percent, self._max_discount)
+            percent = self.get_final_discount(product, percent)
             final = self.make_decision(
-                OUTCOME_URGENT_DISCOUNT, "R5",
+                OUTCOME_URGENT_DISCOUNT if percent > 0 else OUTCOME_MONITOR, "R5",
                 f"{days_left} day(s) left, high risk and about "
                 f"{predicted_unsold:.0f} unit(s) likely unsold.",
                 days_left, percent, price, waste_cost)
@@ -274,7 +238,12 @@ class logicManager():
 
         # Rule6: Normal discount: AI suggests a discount and risk is not low.
         if ai_percent > 0 and risk != "low":
-            percent = self.apply_discount_cap(ai_percent, self._max_discount)
+            percent = self.get_final_discount(product, ai_percent)
+            if percent == 0:
+                return self.make_decision(
+                    OUTCOME_MONITOR, "R7", "The configured discount maximum is 0%.",
+                    days_left, 0, price, waste_cost
+                )
             final = self.make_decision(
                 OUTCOME_DISCOUNT, "R6",
                 f"Near expiry with {risk} risk - a discount is recommended.",

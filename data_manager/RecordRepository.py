@@ -30,19 +30,19 @@ class LocalDataMissingError(DataAccessError):
     """No local backup exists and remote records could not be loaded."""
 
 
-def _check_saved_record(data: dict) -> None:
-    """Check that saved record components are nonempty dictionaries."""
-    if not isinstance(data, dict):
-        raise ValueError("Saved record must be a dictionary.")
-
-    for name in ("product", "ai_assessment", "decision"):
-        component = data.get(name)
-
-        if not isinstance(component, dict) or not component:
-            raise ValueError(f"{name} must be a nonempty dictionary.")
-
-
 class RecordRepository(ABC):
+    @staticmethod
+    def _check_saved_record(data: dict) -> None:
+        """Check that saved record components are nonempty dictionaries."""
+        if not isinstance(data, dict):
+            raise ValueError("Saved record must be a dictionary.")
+
+        for name in ("product", "ai_assessment", "decision"):
+            component = data.get(name)
+
+            if not isinstance(component, dict) or not component:
+                raise ValueError(f"{name} must be a nonempty dictionary.")
+
     @abstractmethod
     def load_all(self, include_deleted: bool = False) -> list[AssessmentRecord]:
         """Return records; a missing store is empty, unreadable data raises DataAccessError."""
@@ -74,7 +74,7 @@ class JsonRecordRepository(RecordRepository):
                 raise ValueError("records must be a list.")
             records = []
             for item in data["records"]:
-                _check_saved_record(item)
+                self._check_saved_record(item)
                 records.append(AssessmentRecord.from_dict(item).to_dict())
             ids = [r["record_id"] for r in records]
             if len(ids) != len(set(ids)):
@@ -147,9 +147,8 @@ class MongoRecordRepository(RecordRepository):
 
     def _collection(self):
         if self._client is None:
-            self._client = MongoClient(self._uri, serverSelectionTimeoutMS=3000,
-                                       connectTimeoutMS=3000, socketTimeoutMS=5000,
-                                       timeoutMS=5000)
+            self._client = MongoClient(self._uri, serverSelectionTimeoutMS=8000,
+                                       connectTimeoutMS=5000, socketTimeoutMS=10000)
         return self._client[self._database][self._name]
 
     def load_all(self, include_deleted: bool = False) -> list[AssessmentRecord]:
@@ -157,7 +156,7 @@ class MongoRecordRepository(RecordRepository):
             query = {} if include_deleted else {"isDeleted": {"$ne": True}}
             records = []
             for document in self._collection().find(query).sort("_id", 1):
-                _check_saved_record(document)
+                self._check_saved_record(document)
                 record = AssessmentRecord.from_dict(document)
                 if document.get("_id") != record.record_id:
                     raise ValueError("MongoDB _id must match record_id.")

@@ -7,6 +7,7 @@ Data_manager class
 from __future__ import annotations
 
 from datetime import date
+import json
 import os
 from pathlib import Path
 
@@ -25,10 +26,41 @@ class DataManager:
         self._json = JsonRecordRepository(
             json_path or os.environ.get("DATA_FILE", default_file),
         )
+        self._settings_path = self._json.path.parent / "discount_settings.json"
         self._repository = repository if repository is not None else MongoRecordRepository()
         self.warning = ""
         self.loaded_from = ""
         self._closed = False
+
+    def load_discount_settings(self) -> dict:
+        """Load local settings, distinct from versioned assessment records."""
+        if not self._settings_path.exists():
+            return {}
+        try:
+            saved = json.loads(self._settings_path.read_text(encoding="utf-8"))
+            if not isinstance(saved, dict):
+                raise ValueError("Settings must be a JSON object.")
+            return saved
+        except (OSError, ValueError) as error:
+            raise DataAccessError("Cannot load local discount settings.") from error
+
+    def save_discount_settings(self, settings: dict) -> bool:
+        """Save settings with a temporary file so an interruption cannot truncate them."""
+        temporary = self._settings_path.with_suffix(".tmp")
+        try:
+            if not isinstance(settings, dict):
+                raise ValueError("Settings must be a dictionary.")
+            self._settings_path.parent.mkdir(parents=True, exist_ok=True)
+            contents = json.dumps(settings, indent=2, allow_nan=False) + "\n"
+            temporary.write_text(contents, encoding="utf-8")
+            os.replace(temporary, self._settings_path)
+            return True
+        except (OSError, ValueError, TypeError):
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+            return False
 
     @property
     def sync_pending(self) -> bool:
@@ -160,7 +192,10 @@ class DataManager:
             if record.is_deleted:
                 continue
             data = record.to_dict()
-            expiry = date.fromisoformat(data["product"]["expiry_date"])
+            try:
+                expiry = date.fromisoformat(data["product"]["expiry_date"])
+            except (ValueError, TypeError, KeyError):
+                continue  # Malformed saved dates must not crash filtering.
             if 0 <= (expiry - today).days <= days:
                 matches.append(record)
         return matches

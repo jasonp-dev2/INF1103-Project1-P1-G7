@@ -1,7 +1,5 @@
-import json
 import logging
 import os
-from abc import ABC, abstractmethod
 
 from dotenv import load_dotenv
 from google import genai
@@ -21,6 +19,7 @@ class GeminiClient(AIService):
         "gemini-3.8-flash",
         "gemini-3.5-flash-lite",
     ]
+    DEFAULT_TIMEOUT_MS = 15000
 
     # Temporary errors: worth trying the next model for
     RETRYABLE_CODES = {429, 500, 503, 504}
@@ -28,8 +27,9 @@ class GeminiClient(AIService):
     # Model not found / not available to this key: skip straight to next model
     SKIP_MODEL_CODES = {404}
 
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key: str | None = None, timeout_ms: int = DEFAULT_TIMEOUT_MS) -> None:
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
+        self.timeout_ms = timeout_ms
         self._client: genai.Client | None = None
 
     # ---------------------------------------------------------------------------
@@ -41,7 +41,10 @@ class GeminiClient(AIService):
             raise ValueError("GEMINI_API_KEY is missing from .env")
 
         if self._client is None:
-            self._client = genai.Client(api_key=self.api_key)
+            self._client = genai.Client(
+                api_key=self.api_key,
+                http_options={"timeout": self.timeout_ms},
+            )
         return self._client
 
     def is_configured(self) -> bool:

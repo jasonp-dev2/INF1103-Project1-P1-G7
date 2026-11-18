@@ -1,13 +1,5 @@
-import logging
-import os
 from abc import ABC, abstractmethod
-from datetime import date
-from dotenv import load_dotenv
-from google import genai
-from google.genai import errors
 
-load_dotenv()
-logger = logging.getLogger(__name__)
 
 class AIService(ABC):
     """Abstract Base Class (Interface) for AI service clients"""
@@ -23,5 +15,4 @@ class AIService(ABC):
     @abstractmethod
     def call_api(self, prompt: str) -> tuple:
         pass
-
 

@@ -47,6 +47,16 @@ class AssessmentRecord:
             self._staff_approved = None
         self._decision = deepcopy(new_decision)
 
+    def update_assessment(self, product: dict, ai_assessment: dict, decision: dict) -> None:
+        """Replace an assessment after a stock change; old approval no longer applies."""
+        if not all(isinstance(value, dict) and value for value in
+                   (product, ai_assessment, decision)):
+            raise ValueError("Assessment components must be nonempty dictionaries.")
+        self._product = deepcopy(product)
+        self._ai_assessment = deepcopy(ai_assessment)
+        self._decision = deepcopy(decision)
+        self._staff_approved = None
+
     def set_staff_approved(self, value: bool | None) -> None:
         if value is not None and not isinstance(value, bool):
             raise ValueError("staff_approved must be True, False, or None.")
